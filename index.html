@@ -1,0 +1,522 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>点阵连线方格对战</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f172a;color:#e2e8f0;font-family:'Segoe UI',system-ui,sans-serif;
+  display:flex;flex-direction:column;align-items:center;min-height:100vh;
+  min-height:100dvh;padding:8px 0;overflow-x:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+h1{font-size:1.15rem;margin-bottom:4px;letter-spacing:2px}
+#status-bar{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;
+  background:#1e293b;border-radius:10px;padding:6px 16px;margin-bottom:6px;
+  font-size:.85rem;box-shadow:0 2px 12px rgba(0,0,0,.35)}
+.score-a{color:#38bdf8;font-weight:700}
+.score-b{color:#fb923c;font-weight:700}
+.turn-indicator{padding:2px 10px;border-radius:6px;font-weight:700;font-size:.8rem}
+.turn-a{background:rgba(56,189,248,.18);color:#38bdf8}
+.turn-b{background:rgba(251,146,60,.18);color:#fb923c}
+canvas{cursor:pointer;display:block;border-radius:4px}
+.btns{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+button{background:#334155;color:#e2e8f0;border:none;padding:6px 14px;
+  border-radius:6px;cursor:pointer;font-size:.8rem;transition:background .2s}
+button:hover{background:#475569}
+button:active{background:#64748b}
+select{background:#334155;color:#e2e8f0;border:1px solid #475569;padding:4px 8px;
+  border-radius:6px;font-size:.8rem;cursor:pointer;outline:none}
+select:hover{border-color:#6366f1}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);
+  background:#1e293b;color:#fff;padding:8px 22px;border-radius:8px;
+  font-size:.85rem;opacity:0;pointer-events:none;
+  transition:opacity .25s;z-index:10;white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,.5);border:1px solid #334155}
+#toast.show{opacity:1}
+#game-over-overlay{display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.6);z-index:20;
+  justify-content:center;align-items:center}
+#game-over-overlay.show{display:flex}
+#game-over-box{background:#1e293b;padding:28px 36px;border-radius:14px;
+  text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.5);border:1px solid #334155}
+#game-over-box h2{font-size:1.3rem;margin-bottom:10px}
+#game-over-box p{font-size:1rem;margin-bottom:14px;color:#94a3b8}
+#game-over-box button{font-size:.95rem;padding:8px 28px}
+.legend{display:flex;gap:14px;font-size:.72rem;color:#64748b;margin-top:3px}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px}
+.mode-bar{display:flex;gap:10px;margin-bottom:4px;align-items:center;flex-wrap:wrap;justify-content:center}
+.mode-bar label{font-size:.78rem;color:#94a3b8;display:flex;align-items:center;gap:4px;cursor:pointer}
+.mode-bar input[type=radio]{accent-color:#6366f1}
+.mode-bar .sep{width:1px;height:16px;background:#334155}
+#celebrate-canvas{position:fixed;inset:0;pointer-events:none;z-index:30}
+.size-label{font-size:.78rem;color:#94a3b8}
+</style>
+</head>
+<body>
+<h1>🔵 点阵连线方格对战 🟠</h1>
+<div class="mode-bar">
+  <label><input type="radio" name="mode" value="pvp" checked> 双人对战</label>
+  <label><input type="radio" name="mode" value="ai"> 人机对战</label>
+  <div class="sep"></div>
+  <span class="size-label">棋盘：</span>
+  <select id="size-select">
+    
+    <option value="3">3×3（4格）</option>
+    <option value="4">4×4（9格）</option>
+    <option value="5">5×5（16格）</option>
+    <option value="6">6×6（25格）</option>
+    <option value="7">7×7（36格）</option>
+    <option value="8">8×8（49格）</option>
+    <option value="9">9×9（64格）</option>
+    <option value="10" selected>10×10（81格）</option>
+  </select>
+</div>
+<div id="status-bar">
+  <span class="turn-indicator turn-a" id="turn-label">A 方回合</span>
+  <span>A：<span class="score-a" id="score-a">0</span></span>
+  <span>B：<span class="score-b" id="score-b">0</span></span>
+  <span id="timer-wrap" style="display:none">⏱<span id="timer">30</span>s</span>
+</div>
+<canvas id="c"></canvas>
+<div class="legend">
+  <span><i style="background:rgba(56,189,248,.45)"></i>A（蓝）</span>
+  <span><i style="background:rgba(251,146,60,.45)"></i>B（橙）</span>
+  <span><i style="background:rgba(255,255,255,.25)"></i>上一手</span>
+</div>
+<div class="btns">
+  <button onclick="undoMove()">↩ 悔棋</button>
+  <button onclick="resetGame()">🔄 重置</button>
+  <button onclick="toggleTimer()">⏱ 计时</button>
+  <button onclick="toggleSound()">🔊 音效</button>
+</div>
+<div id="toast"></div>
+<div id="game-over-overlay"><div id="game-over-box">
+  <h2 id="go-title">对局结束</h2>
+  <p id="go-detail"></p>
+  <button onclick="resetGame();document.getElementById('game-over-overlay').classList.remove('show')">再来一局</button>
+</div></div>
+<canvas id="celebrate-canvas"></canvas>
+
+<script>
+/* ======== CONFIG ======== */
+let ROWS=10,COLS=10,BOX_ROWS,BOX_COLS;
+const DOT_R_BASE=5,EDGE_W=3,HOVER_W=14;
+const COLOR_DOT='#94a3b8';
+const COLOR_A_FILL='rgba(56,189,248,0.42)',COLOR_B_FILL='rgba(251,146,60,0.42)';
+const COLOR_A_LINE='#38bdf8',COLOR_B_LINE='#fb923c';
+const COLOR_HOVER_A='rgba(56,189,248,0.4)',COLOR_HOVER_B='rgba(251,146,60,0.4)';
+const COLOR_LAST='rgba(255,255,255,0.5)';
+
+function updateDims(){
+  BOX_ROWS=ROWS-1;BOX_COLS=COLS-1;
+}
+updateDims();
+
+/* ======== STATE ======== */
+let hEdges,vEdges,boxes,current,scoreA,scoreB,gameOver;
+let timerEnabled=false,timerVal=30,timerInterval=null;
+let hoverEdge=null,lastEdge=null;
+let historyStack=[];
+let aiMode=false,soundOn=true;
+let animatingEdges=[],animatingBoxes=[];
+let CELL,PAD,DOT_R;
+const canvas=document.getElementById('c');
+const ctx=canvas.getContext('2d');
+
+/* ======== SOUND (Web Audio API) ======== */
+let audioCtx=null;
+function ensureAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)()}
+function playTone(freq,dur,vol=0.15){
+  if(!soundOn)return;ensureAudio();
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type='sine';o.frequency.value=freq;g.gain.value=vol;
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start();g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur);
+  o.stop(audioCtx.currentTime+dur);
+}
+function sndDraw(){playTone(600,0.08)}
+function sndBox(){playTone(880,0.12,0.2);setTimeout(()=>playTone(1100,0.1,0.15),80)}
+function sndGameOver(){playTone(523,0.15);setTimeout(()=>playTone(659,0.15),120);setTimeout(()=>playTone(784,0.2),240)}
+function sndUndo(){playTone(350,0.1,0.1)}
+
+/* ======== RESPONSIVE SIZING ======== */
+function calcSize(){
+  const maxW=Math.min(window.innerWidth-16,560);
+  const maxH=window.innerHeight-200;
+  CELL=Math.floor(Math.min(maxW/(COLS-1),maxH/(ROWS-1)));
+  CELL=Math.max(CELL,Math.min(40,Math.floor(560/(COLS-1))));
+  PAD=Math.max(CELL*0.6,16);
+  DOT_R=Math.max(CELL*0.09,DOT_R_BASE*(CELL/52));
+  canvas.width=PAD*2+(COLS-1)*CELL;
+  canvas.height=PAD*2+(ROWS-1)*CELL;
+}
+
+/* ======== INIT ======== */
+function init(){
+  hEdges=Array.from({length:ROWS},()=>Array(COLS-1).fill(0));
+  vEdges=Array.from({length:ROWS-1},()=>Array(COLS).fill(0));
+  boxes=Array.from({length:BOX_ROWS},()=>Array(BOX_COLS).fill(null));
+  current='A';scoreA=0;scoreB=0;gameOver=false;
+  hoverEdge=null;lastEdge=null;historyStack=[];animatingEdges=[];animatingBoxes=[];
+  calcSize();updateUI();draw();
+}
+
+/* ======== SAVE / LOAD ======== */
+function saveState(){
+  try{localStorage.setItem('dab-save',JSON.stringify({
+    hEdges,vEdges,boxes,current,scoreA,scoreB,lastEdge,aiMode,ROWS,COLS
+  }))}catch(e){}
+}
+function loadState(){
+  try{
+    const d=JSON.parse(localStorage.getItem('dab-save'));
+    if(!d||!d.hEdges)return false;
+    ROWS=d.ROWS||10;COLS=d.COLS||10;updateDims();
+    document.getElementById('size-select').value=ROWS;
+    hEdges=d.hEdges;vEdges=d.vEdges;boxes=d.boxes;
+    current=d.current;scoreA=d.scoreA;scoreB=d.scoreB;
+    lastEdge=d.lastEdge;aiMode=!!d.aiMode;gameOver=false;
+    historyStack=[];animatingEdges=[];animatingBoxes=[];
+    document.querySelector(`input[name=mode][value=${aiMode?'ai':'pvp'}]`).checked=true;
+    calcSize();updateUI();draw();return true;
+  }catch(e){return false}
+}
+
+/* ======== COORDINATE HELPERS ======== */
+function dotX(c){return PAD+c*CELL}
+function dotY(r){return PAD+r*CELL}
+
+/* ======== DRAW ======== */
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // filled boxes
+  for(let br=0;br<BOX_ROWS;br++)for(let bc=0;bc<BOX_COLS;bc++){
+    if(!boxes[br][bc])continue;
+    const anim=animatingBoxes.find(a=>a.br===br&&a.bc===bc);
+    const alpha=anim?anim.progress:1;
+    const baseColor=boxes[br][bc]==='A'?[56,189,248]:[251,146,60];
+    ctx.fillStyle=`rgba(${baseColor[0]},${baseColor[1]},${baseColor[2]},${0.15+0.27*alpha})`;
+    ctx.fillRect(dotX(bc)+1,dotY(br)+1,CELL-2,CELL-2);
+  }
+
+  // hover
+  if(hoverEdge&&!gameOver){
+    const{type,r,c}=hoverEdge;
+    const drawn=type==='h'?hEdges[r][c]:vEdges[r][c];
+    if(!drawn){
+      ctx.strokeStyle=current==='A'?COLOR_HOVER_A:COLOR_HOVER_B;
+      ctx.lineWidth=EDGE_W+2;ctx.lineCap='round';ctx.beginPath();
+      if(type==='h'){ctx.moveTo(dotX(c),dotY(r));ctx.lineTo(dotX(c+1),dotY(r))}
+      else{ctx.moveTo(dotX(c),dotY(r));ctx.lineTo(dotX(c),dotY(r+1))}
+      ctx.stroke();
+    }
+  }
+
+  // drawn edges
+  ctx.lineWidth=EDGE_W;ctx.lineCap='round';
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS-1;c++){
+    if(!hEdges[r][c])continue;
+    const isLast=lastEdge&&lastEdge.type==='h'&&lastEdge.r===r&&lastEdge.c===c;
+    ctx.strokeStyle=isLast?COLOR_LAST:(hEdges[r][c]==='A'?COLOR_A_LINE:COLOR_B_LINE);
+    ctx.beginPath();ctx.moveTo(dotX(c),dotY(r));ctx.lineTo(dotX(c+1),dotY(r));ctx.stroke();
+  }
+  for(let r=0;r<ROWS-1;r++)for(let c=0;c<COLS;c++){
+    if(!vEdges[r][c])continue;
+    const isLast=lastEdge&&lastEdge.type==='v'&&lastEdge.r===r&&lastEdge.c===c;
+    ctx.strokeStyle=isLast?COLOR_LAST:(vEdges[r][c]==='A'?COLOR_A_LINE:COLOR_B_LINE);
+    ctx.beginPath();ctx.moveTo(dotX(c),dotY(r));ctx.lineTo(dotX(c),dotY(r+1));ctx.stroke();
+  }
+
+  // last edge glow
+  if(lastEdge&&!gameOver){
+    ctx.save();ctx.globalAlpha=0.6;
+    ctx.strokeStyle='#fff';ctx.lineWidth=1;
+    const{type,r,c}=lastEdge;
+    if(type==='h'){ctx.strokeRect(dotX(c)-2,dotY(r)-2,CELL+4,4)}
+    else{ctx.strokeRect(dotX(c)-2,dotY(r)-2,4,CELL+4)}
+    ctx.restore();
+  }
+
+  // dots
+  ctx.fillStyle=COLOR_DOT;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    ctx.beginPath();ctx.arc(dotX(c),dotY(r),DOT_R,0,Math.PI*2);ctx.fill();
+  }
+}
+
+/* ======== HIT TEST ======== */
+function hitTest(mx,my){
+  let best=null,bestDist=Infinity;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS-1;c++){
+    const x1=dotX(c),x2=dotX(c+1),y=dotY(r);
+    const d=Math.abs(my-y);
+    if(mx>=x1-4&&mx<=x2+4&&d<HOVER_W&&d<bestDist){bestDist=d;best={type:'h',r,c}}
+  }
+  for(let r=0;r<ROWS-1;r++)for(let c=0;c<COLS;c++){
+    const x=dotX(c),y1=dotY(r),y2=dotY(r+1);
+    const d=Math.abs(mx-x);
+    if(my>=y1-4&&my<=y2+4&&d<HOVER_W&&d<bestDist){bestDist=d;best={type:'v',r,c}}
+  }
+  return best;
+}
+
+/* ======== CORE LOGIC ======== */
+function deepCopy(){
+  return{hEdges:hEdges.map(r=>[...r]),vEdges:vEdges.map(r=>[...r]),
+    boxes:boxes.map(r=>[...r]),current,scoreA,scoreB,lastEdge};
+}
+
+function placeEdge(type,r,c,fromAI){
+  if(gameOver)return false;
+  if(type==='h'&&hEdges[r][c])return false;
+  if(type==='v'&&vEdges[r][c])return false;
+  if(aiMode&&!fromAI&&current==='B')return false;
+
+  historyStack.push(deepCopy());
+
+  if(type==='h')hEdges[r][c]=current;else vEdges[r][c]=current;
+  lastEdge={type,r,c};
+  sndDraw();
+
+  animatingEdges.push({type,r,c,progress:0});
+
+  let closed=0;
+  const toCheck=[];
+  if(type==='h'){if(r>0)toCheck.push([r-1,c]);if(r<BOX_ROWS)toCheck.push([r,c])}
+  else{if(c>0)toCheck.push([r,c-1]);if(c<BOX_COLS)toCheck.push([r,c])}
+  for(const[br,bc]of toCheck){
+    if(br<0||br>=BOX_ROWS||bc<0||bc>=BOX_COLS)continue;
+    if(boxes[br][bc])continue;
+    if(hEdges[br][bc]&&hEdges[br+1][bc]&&vEdges[br][bc]&&vEdges[br][bc+1]){
+      boxes[br][bc]=current;closed++;
+      if(current==='A')scoreA++;else scoreB++;
+      animatingBoxes.push({br,bc,progress:0});
+    }
+  }
+
+  if(closed>0){
+    sndBox();
+    showToast(`${current==='A'?'🔵 A':'🟠 B'} 获得 ${closed} 格！额外再走一步`);
+  }else{
+    current=current==='A'?'B':'A';
+  }
+
+  resetTimer();updateUI();saveState();
+  runAnimations(()=>{
+    if(scoreA+scoreB===BOX_ROWS*BOX_COLS){endGame();return}
+    if(aiMode&&current==='B'&&!gameOver)aiTurn();
+  });
+  return true;
+}
+
+/* ======== ANIMATIONS ======== */
+function runAnimations(cb){
+  const start=performance.now(),dur=180;
+  function step(now){
+    const t=Math.min((now-start)/dur,1);
+    animatingEdges.forEach(a=>a.progress=t);
+    animatingBoxes.forEach(a=>a.progress=t);
+    draw();
+    if(t<1)requestAnimationFrame(step);
+    else{animatingEdges=[];animatingBoxes=[];draw();if(cb)cb()}
+  }
+  requestAnimationFrame(step);
+}
+
+/* ======== AI ======== */
+function aiTurn(){
+  if(gameOver)return;
+  setTimeout(()=>{
+    const move=aiPickBest();
+    if(move)placeEdge(move.type,move.r,move.c,true);
+  },350);
+}
+
+function aiPickBest(){
+  const edges=[];
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS-1;c++)
+    if(!hEdges[r][c])edges.push({type:'h',r,c});
+  for(let r=0;r<ROWS-1;r++)for(let c=0;c<COLS;c++)
+    if(!vEdges[r][c])edges.push({type:'v',r,c});
+  if(!edges.length)return null;
+
+  let best=null,bestScore=-Infinity;
+  for(const e of edges){
+    let closes=0,dangerous=0;
+    const neighbors=[];
+    if(e.type==='h'){if(e.r>0)neighbors.push([e.r-1,e.c]);if(e.r<BOX_ROWS)neighbors.push([e.r,e.c])}
+    else{if(e.c>0)neighbors.push([e.r,e.c-1]);if(e.c<BOX_COLS)neighbors.push([e.r,e.c])}
+    for(const[br,bc]of neighbors){
+      if(br<0||br>=BOX_ROWS||bc<0||bc>=BOX_COLS)continue;
+      if(boxes[br][bc])continue;
+      const cnt=(hEdges[br][bc]?1:0)+(hEdges[br+1][bc]?1:0)+(vEdges[br][bc]?1:0)+(vEdges[br][bc+1]?1:0);
+      if(cnt===3)closes++;
+      if(cnt===2)dangerous++;
+    }
+    let score=closes*100-dangerous*10+Math.random()*2;
+    if(score>bestScore){bestScore=score;best=e}
+  }
+  return best;
+}
+
+/* ======== UNDO ======== */
+function undoMove(){
+  if(!historyStack.length||gameOver)return;
+  sndUndo();
+  if(aiMode&&historyStack.length>=2){
+    historyStack.pop();historyStack.pop();
+  }else{
+    historyStack.pop();
+  }
+  const s=historyStack.length?historyStack[historyStack.length-1]:null;
+  if(!s){init();return}
+  hEdges=s.hEdges;vEdges=s.vEdges;boxes=s.boxes;
+  current=s.current;scoreA=s.scoreA;scoreB=s.scoreB;lastEdge=s.lastEdge;
+  updateUI();draw();
+}
+
+/* ======== GAME END ======== */
+function endGame(){
+  gameOver=true;stopTimer();
+  const t=document.getElementById('go-title'),d=document.getElementById('go-detail');
+  if(scoreA>scoreB)t.textContent='🎉 A 方获胜！';
+  else if(scoreB>scoreA)t.textContent='🎉 B 方获胜！';
+  else t.textContent='🤝 平局！';
+  d.textContent=`绿色 ${scoreA} : ${scoreB} 红色`;
+  document.getElementById('game-over-overlay').classList.add('show');
+  sndGameOver();celebrate();
+}
+
+/* ======== CELEBRATE PARTICLES ======== */
+function celebrate(){
+  const cc=document.getElementById('celebrate-canvas');
+  cc.width=window.innerWidth;cc.height=window.innerHeight;
+  const cctx=cc.getContext('2d');
+  const colors=['#38bdf8','#fb923c','#facc15','#60a5fa','#c084fc','#fb923c'];
+  const particles=[];
+  for(let i=0;i<120;i++){
+    particles.push({
+      x:cc.width/2+(Math.random()-0.5)*200,
+      y:cc.height/2,
+      vx:(Math.random()-0.5)*8,
+      vy:-Math.random()*12-4,
+      size:Math.random()*6+2,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      life:1,decay:0.008+Math.random()*0.01
+    });
+  }
+  function step(){
+    cctx.clearRect(0,0,cc.width,cc.height);
+    let alive=false;
+    for(const p of particles){
+      if(p.life<=0)continue;
+      alive=true;
+      p.x+=p.vx;p.vy+=0.25;p.y+=p.vy;p.life-=p.decay;
+      cctx.globalAlpha=Math.max(0,p.life);
+      cctx.fillStyle=p.color;
+      cctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);
+    }
+    cctx.globalAlpha=1;
+    if(alive)requestAnimationFrame(step);
+    else cctx.clearRect(0,0,cc.width,cc.height);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ======== UI ======== */
+function updateUI(){
+  document.getElementById('score-a').textContent=scoreA;
+  document.getElementById('score-b').textContent=scoreB;
+  const lbl=document.getElementById('turn-label');
+  lbl.textContent=(current==='A'?'A 方':'B 方')+'回合';
+  lbl.className='turn-indicator '+(current==='A'?'turn-a':'turn-b');
+}
+
+let toastTimeout;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+/* ======== TIMER ======== */
+function resetTimer(){
+  timerVal=30;document.getElementById('timer').textContent=timerVal;
+  if(timerEnabled){clearInterval(timerInterval);timerInterval=setInterval(tickTimer,1000)}
+}
+function tickTimer(){
+  timerVal--;document.getElementById('timer').textContent=timerVal;
+  if(timerVal<=0){
+    showToast(`⏱ ${current==='A'?'A':'B'} 超时，跳过回合`);
+    current=current==='A'?'B':'A';updateUI();resetTimer();draw();
+    if(aiMode&&current==='B'&&!gameOver)aiTurn();
+  }
+}
+function toggleTimer(){
+  timerEnabled=!timerEnabled;
+  document.getElementById('timer-wrap').style.display=timerEnabled?'':'none';
+  if(timerEnabled)resetTimer();else clearInterval(timerInterval);
+}
+function toggleSound(){soundOn=!soundOn;showToast(soundOn?'🔊 音效已开启':'🔇 音效已关闭')}
+function stopTimer(){clearInterval(timerInterval)}
+
+/* ======== EVENTS ======== */
+function getPos(e){
+  const rect=canvas.getBoundingClientRect();
+  const touch=e.touches?e.touches[0]:e;
+  return{
+    mx:(touch.clientX-rect.left)*canvas.width/rect.width,
+    my:(touch.clientY-rect.top)*canvas.height/rect.height
+  };
+}
+canvas.addEventListener('mousemove',e=>{
+  if(gameOver)return;
+  const{mx,my}=getPos(e);hoverEdge=hitTest(mx,my);draw();
+});
+canvas.addEventListener('mouseleave',()=>{hoverEdge=null;draw()});
+canvas.addEventListener('click',e=>{
+  const{mx,my}=getPos(e);const hit=hitTest(mx,my);
+  if(hit)placeEdge(hit.type,hit.r,hit.c);
+});
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const{mx,my}=getPos(e);const hit=hitTest(mx,my);
+  if(hit)placeEdge(hit.type,hit.r,hit.c);
+},{passive:false});
+
+document.querySelectorAll('input[name=mode]').forEach(r=>{
+  r.addEventListener('change',()=>{
+    aiMode=r.value==='ai';resetGame();
+  });
+});
+
+document.getElementById('size-select').addEventListener('change',e=>{
+  const n=parseInt(e.target.value);
+  if(n>=3&&n<=10&&n!==ROWS){
+    ROWS=n;COLS=n;updateDims();
+    resetGame();
+  }
+});
+
+/* ======== RESET ======== */
+function resetGame(){
+  document.getElementById('game-over-overlay').classList.remove('show');
+  document.getElementById('celebrate-canvas').getContext('2d').clearRect(0,0,window.innerWidth,window.innerHeight);
+  stopTimer();init();localStorage.removeItem('dab-save');
+}
+
+/* ======== BOOT ======== */
+window.addEventListener('resize',()=>{calcSize();draw()});
+calcSize();
+if(!loadState())init();
+</script>
+</body>
+</html>
+
+
+
+
