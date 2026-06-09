@@ -1,0 +1,478 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>2048 - 休闲游戏 (带作弊)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    color: #fff;
+  }
+  .container { max-width: 900px; width: 100%; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .title {
+    font-size: 48px; font-weight: 900;
+    background: linear-gradient(90deg, #f7971e, #ffd200);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .scores { display: flex; gap: 10px; }
+  .score-box {
+    background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+    padding: 8px 18px; text-align: center; min-width: 80px;
+  }
+  .score-box .label { font-size: 11px; text-transform: uppercase; opacity: 0.7; letter-spacing: 1px; }
+  .score-box .value { font-size: 22px; font-weight: 800; color: #ffd200; }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; }
+  .btn {
+    flex: 1; padding: 12px; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; color: #fff; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+  .btn:active { transform: translateY(0); }
+  .btn-new { background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a1a2e; }
+  .btn-undo { background: linear-gradient(135deg, #667eea, #764ba2); }
+  .btn-cheat { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+  .btn-cheat.active { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+  .game-layout { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 16px; }
+  .game-left { flex: 0 0 480px; min-width: 0; }
+  .game-right { flex: 1; min-width: 0; }
+  .board-wrapper {
+    position: relative; background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 14px;
+  }
+  .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .cell {
+    aspect-ratio: 1; border-radius: 12px;
+    display: flex; justify-content: center; align-items: center;
+    font-weight: 900; transition: all 0.15s ease; cursor: default;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05);
+  }
+  .cell[data-value="2"]    { background: #eee4da; color: #776e65; font-size: 42px; }
+  .cell[data-value="4"]    { background: #ede0c8; color: #776e65; font-size: 42px; }
+  .cell[data-value="8"]    { background: #f2b179; color: #f9f6f2; font-size: 42px; }
+  .cell[data-value="16"]   { background: #f59563; color: #f9f6f2; font-size: 40px; }
+  .cell[data-value="32"]   { background: #f67c5f; color: #f9f6f2; font-size: 40px; }
+  .cell[data-value="64"]   { background: #f65e3b; color: #f9f6f2; font-size: 40px; }
+  .cell[data-value="128"]  { background: #edcf72; color: #f9f6f2; font-size: 36px; word-break: break-all; line-height: 1; }
+  .cell[data-value="256"]  { background: #edcc61; color: #f9f6f2; font-size: 36px; word-break: break-all; line-height: 1; }
+  .cell[data-value="512"]  { background: #edc850; color: #f9f6f2; font-size: 36px; word-break: break-all; line-height: 1; }
+  .cell[data-value="1024"] { background: #edc53f; color: #f9f6f2; font-size: 32px; word-break: break-all; line-height: 1; }
+  .cell[data-value="2048"] { background: #edc22e; color: #f9f6f2; font-size: 32px; word-break: break-all; line-height: 1; box-shadow: 0 0 30px rgba(237,194,46,0.6); }
+  .cell[data-value="super"]{ background: linear-gradient(135deg,#ff6b6b,#feca57,#48dbfb,#ff9ff3); color:#fff; font-size:28px; word-break: break-all; line-height: 1; animation: rainbow 2s linear infinite; }
+  @keyframes rainbow { 0%{filter:hue-rotate(0deg)} 100%{filter:hue-rotate(360deg)} }
+  .cell.cheat-target { outline: 3px dashed #ff6b6b; outline-offset: -3px; cursor: pointer; }
+  .cell.cheat-target:hover { outline-color: #ffd200; background: rgba(255,210,0,0.2) !important; }
+  .cell.pop { animation: pop 0.2s ease; }
+  @keyframes pop { 0%{transform:scale(0.5)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+  .overlay {
+    position: absolute; top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    border-radius: 16px; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; gap: 16px;
+    z-index: 10; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .overlay h2 { font-size: 36px; color: #ffd200; }
+  .overlay p { font-size: 16px; opacity: 0.8; }
+  .cheat-panel {
+    background: rgba(255,255,255,0.05); backdrop-filter: blur(20px);
+    border: 1px solid rgba(231,76,60,0.3); border-radius: 16px;
+    padding: 20px; display: none; position: sticky; top: 20px;
+  }
+  .cheat-panel.show { display: block; animation: slideDown 0.3s ease; }
+  @keyframes slideDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+  .cheat-title { font-size: 20px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .cheat-title .icon { font-size: 24px; }
+  .cheat-section { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .cheat-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .cheat-section h4 { font-size: 13px; text-transform: uppercase; opacity: 0.6; margin-bottom: 8px; letter-spacing: 1px; }
+  .cheat-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .cheat-btn {
+    padding: 10px 16px; border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; background: rgba(255,255,255,0.08);
+    color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .cheat-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+  .cheat-btn.danger { border-color: rgba(231,76,60,0.4); color: #e74c3c; }
+  .cheat-btn.danger:hover { background: rgba(231,76,60,0.2); }
+  .cheat-btn.gold { border-color: rgba(255,210,0,0.4); color: #ffd200; }
+  .cheat-btn.gold:hover { background: rgba(255,210,0,0.15); }
+  .cheat-btn.success { border-color: rgba(46,204,113,0.4); color: #2ecc71; }
+  .cheat-btn.success:hover { background: rgba(46,204,113,0.15); }
+  .cheat-select {
+    padding: 10px 14px; border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; background: rgba(255,255,255,0.08);
+    color: #fff; font-size: 13px; outline: none; cursor: pointer;
+  }
+  .cheat-select option { background: #1a1a2e; color: #fff; }
+  .cheat-log {
+    margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.3);
+    border-radius: 8px; font-family: "Cascadia Code","Fira Code",monospace;
+    font-size: 12px; max-height: 120px; overflow-y: auto;
+    color: #2ecc71; line-height: 1.6;
+  }
+  .cheat-log .log-entry { opacity: 0.8; }
+  .cheat-log .log-entry:last-child { opacity: 1; color: #ffd200; }
+  .instructions {
+    background: rgba(255,255,255,0.05); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+    padding: 16px; font-size: 13px; line-height: 1.8; opacity: 0.7;
+  }
+  .instructions strong { color: #ffd200; }
+  .swipe-hint { text-align: center; font-size: 12px; opacity: 0.4; margin-top: 8px; }
+  @media (max-width: 850px) {
+    .game-layout { flex-direction: column; }
+    .game-left, .game-right { width: 100%; flex: none; }
+    .cheat-panel { position: static; }
+    .cheat-row { flex-wrap: wrap; }
+    .cheat-btn, .cheat-select { font-size: 12px; padding: 8px 10px; }
+    .header { flex-direction: column; gap: 10px; }
+    .title { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="title">2048</div>
+    <div class="scores">
+      <div class="score-box"><div class="label">分数</div><div class="value" id="score">0</div></div>
+      <div class="score-box"><div class="label">最高</div><div class="value" id="best">0</div></div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button class="btn btn-new" onclick="Game.newGame()">新游戏</button>
+    <button class="btn btn-undo" onclick="Game.undo()">↩ 撤销</button>
+    <button class="btn btn-cheat" id="cheatToggle" onclick="Cheat.toggle()">🎮 作弊</button>
+  </div>
+  <div class="game-layout">
+    <div class="game-left">
+      <div class="board-wrapper">
+        <div class="board" id="board"></div>
+        <div class="overlay" id="gameOverOverlay">
+          <h2>游戏结束!</h2>
+          <p>最终分数: <span id="finalScore">0</span></p>
+          <button class="btn btn-new" onclick="Game.newGame()">再来一局</button>
+        </div>
+      </div>
+    </div>
+    <div class="game-right">
+      <div class="cheat-panel" id="cheatPanel">
+        <div class="cheat-title"><span class="icon">🎮</span> 作弊控制台</div>
+        <div class="cheat-section">
+          <h4>⚡ 快速作弊</h4>
+          <div class="cheat-row">
+            <button class="cheat-btn gold" onclick="Cheat.addRandomHigh()">+大数字方块</button>
+            <button class="cheat-btn gold" onclick="Cheat.doubleAll()">翻倍全场</button>
+            <button class="cheat-btn danger" onclick="Cheat.clearBoard()">🗑 清空棋盘</button>
+          </div>
+        </div>
+        <div class="cheat-section">
+          <h4>🎯 指定生成</h4>
+          <div class="cheat-row">
+            <span>生成</span>
+            <select class="cheat-select" id="spawnValue">
+              <option value="2">2</option><option value="4">4</option><option value="8">8</option>
+              <option value="16">16</option><option value="32">32</option><option value="64">64</option>
+              <option value="128">128</option><option value="256">256</option><option value="512">512</option>
+              <option value="1024">1024</option><option value="2048">2048</option>
+            </select>
+            <button class="cheat-btn" onclick="Cheat.spawnSelected()">放到空位</button>
+          </div>
+        </div>
+        <div class="cheat-section">
+          <h4>✏️ 改写方块 (点击棋盘格子)</h4>
+          <div class="cheat-row">
+            <button class="cheat-btn" id="editModeBtn" onclick="Cheat.toggleEditMode()">🎯 开启改写模式</button>
+            <select class="cheat-select" id="editValue">
+              <option value="0">清空</option><option value="2">2</option><option value="4">4</option>
+              <option value="8">8</option><option value="16">16</option><option value="32">32</option>
+              <option value="64">64</option><option value="128">128</option><option value="256">256</option>
+              <option value="512">512</option><option value="1024">1024</option><option value="2048">2048</option>
+            </select>
+            <span id="editHint" style="font-size:12px;opacity:0.5;"></span>
+          </div>
+        </div>
+        <div class="cheat-section">
+          <h4>🤖 自动挂机</h4>
+          <div class="cheat-row">
+            <button class="cheat-btn success" id="autoBtn" onclick="Cheat.toggleAuto()">▶ 开始自动</button>
+            <select class="cheat-select" id="autoSpeed">
+              <option value="300">慢速</option><option value="150" selected>正常</option>
+              <option value="50">快速</option><option value="10">极速</option>
+            </select>
+          </div>
+        </div>
+        <div class="cheat-section">
+          <h4>📋 操作日志</h4>
+          <div class="cheat-log" id="cheatLog">
+            <div class="log-entry">[系统] 作弊控制台已就绪</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="instructions">
+    <strong>操作:</strong> 方向键 / WASD / 滑动屏幕移动方块<br>
+    <strong>玩法:</strong> 合并相同数字，挑战最高分!<br>
+    <strong>作弊:</strong> 点击 <strong>🎮 作弊</strong> 按钮开启作弊面板
+  </div>
+  <div class="swipe-hint">支持触屏滑动操作</div>
+</div>
+<script>
+const Game = (() => {
+  let grid, score, bestScore, history, gameOver;
+  function init() {
+    bestScore = parseInt(localStorage.getItem('2048_best') || '0');
+    document.getElementById('best').textContent = bestScore;
+    newGame();
+  }
+  function newGame() {
+    grid = Array.from({length: 4}, () => Array(4).fill(0));
+    score = 0; history = []; gameOver = false;
+    document.getElementById('gameOverOverlay').classList.remove('show');
+    spawnTile(); spawnTile(); render();
+  }
+  function spawnTile() {
+    const empty = [];
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (grid[r][c] === 0) empty.push([r, c]);
+    if (empty.length === 0) return false;
+    const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+    grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+    return [r, c];
+  }
+  function saveState() {
+    history.push({ grid: grid.map(r => [...r]), score });
+    if (history.length > 50) history.shift();
+  }
+  function undo() {
+    if (history.length === 0) { Cheat.log('撤销', '没有可撤销的步骤'); return; }
+    const prev = history.pop();
+    grid = prev.grid; score = prev.score; gameOver = false;
+    document.getElementById('gameOverOverlay').classList.remove('show');
+    Cheat.log('撤销', '已回到上一步');
+    render();
+  }
+  function move(dir) {
+    if (gameOver) return;
+    saveState();
+    const oldGrid = grid.map(r => [...r]);
+    if (dir === 'left')  for (let r = 0; r < 4; r++) slideRow(r, 1);
+    if (dir === 'right') for (let r = 0; r < 4; r++) slideRow(r, -1);
+    if (dir === 'up')    for (let c = 0; c < 4; c++) slideCol(c, 1);
+    if (dir === 'down')  for (let c = 0; c < 4; c++) slideCol(c, -1);
+    let moved = false;
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (grid[r][c] !== oldGrid[r][c]) { moved = true; break; }
+    if (!moved) { history.pop(); return; }
+    const pos = spawnTile();
+    render(pos ? {type:'pop', r:pos[0], c:pos[1]} : null);
+    if (isGameOver()) {
+      gameOver = true;
+      document.getElementById('finalScore').textContent = score;
+      setTimeout(() => document.getElementById('gameOverOverlay').classList.add('show'), 400);
+    }
+  }
+  function slideRow(r, dir) {
+    let row = grid[r].filter(v => v !== 0);
+    if (dir === -1) row.reverse();
+    for (let i = 0; i < row.length - 1; i++) {
+      if (row[i] === row[i + 1]) { row[i] *= 2; score += row[i]; row.splice(i + 1, 1); }
+    }
+    while (row.length < 4) row.push(0);
+    if (dir === -1) row.reverse();
+    grid[r] = row;
+  }
+  function slideCol(c, dir) {
+    let col = [];
+    for (let r = 0; r < 4; r++) col.push(grid[r][c]);
+    col = col.filter(v => v !== 0);
+    if (dir === -1) col.reverse();
+    for (let i = 0; i < col.length - 1; i++) {
+      if (col[i] === col[i + 1]) { col[i] *= 2; score += col[i]; col.splice(i + 1, 1); }
+    }
+    while (col.length < 4) col.push(0);
+    if (dir === -1) col.reverse();
+    for (let r = 0; r < 4; r++) grid[r][c] = col[r];
+  }
+  function isGameOver() {
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+      if (grid[r][c] === 0) return false;
+      if (c < 3 && grid[r][c] === grid[r][c + 1]) return false;
+      if (r < 3 && grid[r][c] === grid[r + 1][c]) return false;
+    }
+    return true;
+  }
+  function render(anim) {
+    const board = document.getElementById('board');
+    board.innerHTML = '';
+    if (score > bestScore) { bestScore = score; localStorage.setItem('2048_best', bestScore); }
+    document.getElementById('score').textContent = score;
+    document.getElementById('best').textContent = bestScore;
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      const v = grid[r][c];
+      if (v > 0) { cell.setAttribute('data-value', v > 2048 ? 'super' : v); cell.textContent = v; }
+      if (anim && anim.type === 'pop' && anim.r === r && anim.c === c) cell.classList.add('pop');
+      if (Cheat.editMode) { cell.classList.add('cheat-target'); cell.onclick = () => Cheat.editCell(r, c); }
+      board.appendChild(cell);
+    }
+  }
+  document.addEventListener('keydown', e => {
+    const map = {ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};
+    if (map[e.key]) { e.preventDefault(); move(map[e.key]); }
+    if (e.key === 'z' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undo(); }
+  });
+  let touchStart = null;
+  document.addEventListener('touchstart', e => { touchStart = {x: e.touches[0].clientX, y: e.touches[0].clientY}; }, {passive: true});
+  document.addEventListener('touchend', e => {
+    if (!touchStart) return;
+    const dx = e.changedTouches[0].clientX - touchStart.x, dy = e.changedTouches[0].clientY - touchStart.y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 30) return;
+    if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 'right' : 'left'); else move(dy > 0 ? 'down' : 'up');
+    touchStart = null;
+  }, {passive: true});
+  return {
+    init, newGame, undo, move,
+    get grid() { return grid; },
+    get score() { return score; },
+    set score(v) { score = v; },
+    render,
+    get gameOver() { return gameOver; }
+  };
+})();
+
+const Cheat = (() => {
+  let editMode = false;
+  let autoInterval = null;
+  const logEntries = [];
+  function log(action, detail) {
+    const time = new Date().toLocaleTimeString('zh-CN', {hour12: false});
+    logEntries.push('[' + time + '] ' + action + ': ' + detail);
+    if (logEntries.length > 50) logEntries.shift();
+    const el = document.getElementById('cheatLog');
+    el.innerHTML = logEntries.map(e => '<div class="log-entry">' + e + '</div>').join('');
+    el.scrollTop = el.scrollHeight;
+  }
+  function toggle() {
+    const panel = document.getElementById('cheatPanel');
+    const btn = document.getElementById('cheatToggle');
+    panel.classList.toggle('show');
+    btn.classList.toggle('active');
+    btn.textContent = panel.classList.contains('show') ? '✅ 作弊ON' : '🎮 作弊';
+    log('面板', panel.classList.contains('show') ? '作弊面板已开启' : '作弊面板已关闭');
+  }
+  function spawnSelected() {
+    const val = parseInt(document.getElementById('spawnValue').value);
+    const empty = [];
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (Game.grid[r][c] === 0) empty.push([r, c]);
+    if (empty.length === 0) { log('生成失败', '没有空位'); return; }
+    const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+    Game.grid[r][c] = val;
+    Game.render({type: 'pop', r, c});
+    log('生成', '在 (' + r + ',' + c + ') 放置了 ' + val);
+  }
+  function addRandomHigh() {
+    const vals = [128, 256, 512, 1024, 2048];
+    const val = vals[Math.floor(Math.random() * vals.length)];
+    const empty = [];
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (Game.grid[r][c] === 0) empty.push([r, c]);
+    if (empty.length === 0) { log('生成失败', '没有空位'); return; }
+    const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+    Game.grid[r][c] = val;
+    Game.render({type: 'pop', r, c});
+    log('大数字', '在 (' + r + ',' + c + ') 放置了 ' + val);
+  }
+  function doubleAll() {
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (Game.grid[r][c] > 0) Game.grid[r][c] *= 2;
+    Game.render();
+    log('翻倍', '所有方块已翻倍');
+  }
+  function clearBoard() {
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) Game.grid[r][c] = 0;
+    Game.render();
+    log('清空', '棋盘已清空');
+  }
+  function toggleEditMode() {
+    editMode = !editMode;
+    document.getElementById('editModeBtn').textContent = editMode ? '✅ 改写中...' : '🎯 开启改写模式';
+    document.getElementById('editModeBtn').className = editMode ? 'cheat-btn success' : 'cheat-btn';
+    document.getElementById('editHint').textContent = editMode ? '← 点击棋盘格子改写' : '';
+    Game.render();
+    log('改写模式', editMode ? '已开启，点击格子改写' : '已关闭');
+  }
+  function editCell(r, c) {
+    if (!editMode) return;
+    const val = parseInt(document.getElementById('editValue').value);
+    Game.grid[r][c] = val;
+    Game.render({type: 'pop', r, c});
+    log('改写', '(' + r + ',' + c + ') → ' + (val === 0 ? '清空' : val));
+  }
+  function toggleAuto() {
+    if (autoInterval) {
+      clearInterval(autoInterval);
+      autoInterval = null;
+      document.getElementById('autoBtn').textContent = '▶ 开始自动';
+      document.getElementById('autoBtn').className = 'cheat-btn success';
+      log('自动', '已停止');
+      return;
+    }
+    const speed = parseInt(document.getElementById('autoSpeed').value);
+    let stuckCount = 0;
+    let cheatCount = 0;
+    autoInterval = setInterval(() => {
+      if (Game.gameOver) { toggleAuto(); return; }
+      // Count empty cells
+      let emptyCount = 0;
+      for (let r = 0; r < 4; r++)
+        for (let c = 0; c < 4; c++)
+          if (Game.grid[r][c] === 0) emptyCount++;
+      // Auto-cheat: clear a random tile when board is nearly full
+      if (emptyCount <= 1) {
+        const filled = [];
+        for (let r = 0; r < 4; r++)
+          for (let c = 0; c < 4; c++)
+            if (Game.grid[r][c] > 0) filled.push([r, c]);
+        if (filled.length > 0) {
+          const [cr, cc] = filled[Math.floor(Math.random() * filled.length)];
+          const cleared = Game.grid[cr][cc];
+          Game.grid[cr][cc] = 0;
+          cheatCount++;
+          log('自动作弊', '清除 (' + cr + ',' + cc + ') 的 ' + cleared + '，第' + cheatCount + '次');
+        }
+      }
+      const prev = JSON.stringify(Game.grid);
+      const order = [0, 1, 2, 3];
+      if (stuckCount > 2) { order.sort(() => Math.random() - 0.5); }
+      const dirs = ['up', 'left', 'down', 'right'];
+      for (const idx of order) {
+        Game.move(dirs[idx]);
+        if (JSON.stringify(Game.grid) !== prev) { stuckCount = 0; return; }
+      }
+      stuckCount++;
+    }, speed);
+    document.getElementById('autoBtn').textContent = '⏸ 停止自动';
+    document.getElementById('autoBtn').className = 'cheat-btn danger';
+    log('自动', '已启动，间隔 ' + speed + 'ms，危急时自动清方块');
+  }
+  return {
+    toggle, spawnSelected, addRandomHigh, doubleAll, clearBoard,
+    toggleEditMode, editCell, toggleAuto, log,
+    get editMode() { return editMode; }
+  };
+})();
+Game.init();
+</script>
+</body>
+</html>
