@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1, user-scalable=no;"/>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>无尽之湖 - 玩一把</title>
+<meta name="keywords" content="无尽之湖,无尽之河,endless lake" />
+<meta name="description" content="facebook上火爆的h5游戏endless lake中文版。" />
+<script type="text/javascript" src="js/config.js"></script>
+<script language="javascript" type="text/javascript" src="js/share.js"></script>
+<script type="text/javascript" src="js/game.js"></script>
+<script type="text/javascript" src="js/developer.js"></script>
+<script type="text/javascript" src="game.min.js"></script>
+</head>
+<body>
+<div id="file-protocol-warning" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#1a1a2e;color:#fff;font-family:Arial,sans-serif;z-index:99999;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box;">
+  <div>
+    <h2 style="color:#e94560;margin-bottom:20px;">&#x26A0; 需要通过 HTTP 服务器访问</h2>
+    <p style="font-size:16px;line-height:1.6;max-width:500px;">
+      此游戏无法直接双击打开，请使用以下任一方式启动本地服务器：
+    </p>
+    <div style="background:#16213e;padding:15px 20px;border-radius:8px;margin:20px auto;max-width:500px;text-align:left;font-family:monospace;font-size:14px;line-height:1.8;">
+      <div style="color:#0f3460;margin-bottom:8px;">方式一：Python</div>
+      <div style="color:#e94560;">cd <span style="color:#a8a8a8;">游戏目录</span></div>
+      <div style="color:#e94560;">python -m http.server 8080</div>
+      <div style="color:#a8a8a8;margin-top:4px;">然后打开 http://localhost:8080</div>
+      <br/>
+      <div style="color:#0f3460;margin-bottom:8px;">方式二：Node.js</div>
+      <div style="color:#e94560;">npx http-server -p 8080</div>
+      <div style="color:#a8a8a8;margin-top:4px;">然后打开 http://localhost:8080</div>
+    </div>
+  </div>
+</div>
+<div style="display:none;"><img src="icon.jpg" /></div>
+<div id='gameContainer'>
+<canvas id="canvas"></canvas>
+<script type="text/javascript">
+if (window.location.protocol === 'file:') {
+    document.getElementById('file-protocol-warning').style.display = 'flex';
+    throw new Error('Please use a local HTTP server to run this game.');
+}
+</script>
+<script type="text/javascript">(function (){updateShare(0);})();</script>
+<script type="text/javascript">
+var SpilData = {id:'576742227280296759'};
+var Api = null;
+var LOGO;
+var MORE;
+var SCALE;
+var CENTERX;
+var CENTERY;
+var W;
+var H;
+var moreGX;
+var moreGY;
+var LOGOimg;
+var LOGOW;
+var LOGOH;
+var moreGamesimg;
+var actionLogo;
+var actionMoreGames;
+var noBrand = null;
+
+window.addEventListener('resize', function() {
+    if (game.device.iOS) {
+        setTimeout(function() { game.system._onWindowResize && game.system._onWindowResize(); }, 500);
+        setTimeout(function() { game.system._onWindowResize && game.system._onWindowResize(); }, 800);
+        setTimeout(function() { game.system.checkOrientation && game.system.checkOrientation(); }, 1000);
+    }
+});
+window.onclick = function() { this.focus(); };
+
+try {
+    GameAPI.loadAPI(function(apiInstance) {
+        Api = apiInstance;
+    }, SpilData);
+} catch (e) {
+    console.warn('GameAPI loadAPI failed (expected when running locally):', e.message);
+}
+</script>
+</div>
+</body>
+</html>
+

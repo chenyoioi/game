@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>对战小游戏合集</title>
+<title>小游戏合集</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0f172a;color:#e2e8f0;font-family:"Segoe UI",system-ui,sans-serif;
@@ -51,7 +51,7 @@ h1{font-size:1.15rem;margin-bottom:4px;letter-spacing:2px}
 .turn-indicator{padding:2px 10px;border-radius:6px;font-weight:700;font-size:.8rem}
 .turn-a{background:rgba(56,189,248,.18);color:#38bdf8}
 .turn-b{background:rgba(251,146,60,.18);color:#fb923c}
-canvas{cursor:pointer;display:block;border-radius:4px}
+canvas{cursor:pointer;display:block;border-radius:4px;max-width:100%;height:auto}
 .btns{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 button{background:#334155;color:#e2e8f0;border:none;padding:6px 14px;
   border-radius:6px;cursor:pointer;font-size:.8rem;transition:background .2s}
@@ -81,12 +81,14 @@ select:hover{border-color:#6366f1}
 .mode-bar label{font-size:.78rem;color:#94a3b8;display:flex;align-items:center;gap:4px;cursor:pointer}
 .mode-bar input[type=radio]{accent-color:#6366f1}
 #celebrate-canvas{position:fixed;inset:0;pointer-events:none;z-index:30}
+#game-iframe-wrap{display:none;width:100%;max-width:560px;aspect-ratio:9/16;margin:0 auto}
+#game-iframe-wrap iframe{width:100%;height:100%;border:none;border-radius:8px;background:#000}
 .size-label{font-size:.78rem;color:#94a3b8}
 </style>
 </head>
 <body>
 <div id="landing">
-  <div class="landing-header"><h1>🎮 对战小游戏合集</h1><p>选择游戏开始对战</p></div>
+  <div class="landing-header"><h1>🎮 小游戏合集</h1><p>选择游戏开始对战</p></div>
   <div class="category" onclick="toggleCategory(this)"><div class="category-header"><span class="category-icon">♟️</span><span class="category-title">经典棋类</span><span class="category-count">5 个游戏</span><span class="category-arrow">▶</span></div><div class="category-games">
     <div class="game-card" onclick="event.stopPropagation();enterGame('dots')"><div class="game-card-top"><h3>🔵🟠 点阵连线方格对战</h3><span class="badge badge-play">开始</span></div><p>双人轮流画线，围成方格得分。支持双人/人机对战。</p></div>
     <div class="game-card" onclick="event.stopPropagation();enterGame('ttt')"><div class="game-card-top"><h3>❌⭕ 井字棋对战</h3><span class="badge badge-play">开始</span></div><p>经典井字棋，第 3 手时第 1 手消失（除非已连线）。</p></div>
@@ -100,25 +102,22 @@ select:hover{border-color:#6366f1}
     <div class="game-card" onclick="event.stopPropagation();enterGame('mancala')"><div class="game-card-top"><h3>🪨 播棋 (Mancala)</h3><span class="badge badge-play">开始</span></div><p>古老播种棋，轮流播种并捕获对手棋子，终盘多者胜。</p></div>
     <div class="game-card" onclick="event.stopPropagation();enterGame('domineering')"><div class="game-card-top"><h3>🀄 多米诺争地</h3><span class="badge badge-play">开始</span></div><p>竖方 vs 横方轮流放骨牌，无法放置者输。</p></div>
   </div></div>
-  <div class="category" onclick="toggleCategory(this)"><div class="category-header"><span class="category-icon">🔄</span><span class="category-title">翻转 / 消除</span><span class="category-count">1 个游戏</span><span class="category-arrow">▶</span></div><div class="category-games">
+  <div class="category" onclick="toggleCategory(this)"><div class="category-header"><span class="category-icon">🔄</span><span class="category-title">翻转 / 消除</span><span class="category-count">2 个游戏</span><span class="category-arrow">▶</span></div><div class="category-games">
     <div class="game-card" onclick="event.stopPropagation();enterGame('lightsout')"><div class="game-card-top"><h3>💡 翻转灯 (Lights Out)</h3><span class="badge badge-play">开始</span></div><p>点击翻转周围灯，目标全部熄灭。单人解谜。</p></div>
+    <div class="game-card" onclick="event.stopPropagation();enterGame('breakout')"><div class="game-card-top"><h3>🧱 打砖块 (Breakout)</h3><span class="badge badge-play">开始</span></div><p>控制挡板弹球，消除所有砖块。经典弹球消除。</p></div>
   </div></div>
   <div class="category" onclick="toggleCategory(this)"><div class="category-header"><span class="category-icon">⚡</span><span class="category-title">记忆 / 反应</span><span class="category-count">2 个游戏</span><span class="category-arrow">▶</span></div><div class="category-games">
     <div class="game-card" onclick="event.stopPropagation();enterGame('memory')"><div class="game-card-top"><h3>🃏 记忆翻牌</h3><span class="badge badge-play">开始</span></div><p>双人轮流翻牌找配对，配对多者胜。</p></div>
     <div class="game-card" onclick="event.stopPropagation();enterGame('react')"><div class="game-card-top"><h3>⚡ 反应对决</h3><span class="badge badge-play">开始</span></div><p>信号出现后抢先点击，考验反应速度。5 轮积分制。</p></div>
   </div></div>
-  <div class="category" onclick="toggleCategory(this)"><div class="category-header"><span class="category-icon">🀄</span><span class="category-title">中国象棋</span><span class="category-count">2 个游戏</span><span class="category-arrow">▶</span></div><div class="category-games">
-    <div class="game-card" onclick="event.stopPropagation();enterGame('cc')"><div class="game-card-top"><h3>🔴⚫ 中国象棋</h3><span class="badge badge-play">开始</span></div><p>经典中国象棋，9×10 棋盘，将死对方即胜。</p></div>
-    <div class="game-card" onclick="event.stopPropagation();enterGame('blind')"><div class="game-card-top"><h3>❓ 揭棋</h3><span class="badge badge-play">开始</span></div><p>棋子随机暗置，翻开才知道是什么。翻开即可走棋！</p></div>
+  <div class="category" onclick="toggleCategory(this)"><div class="category-header"><span class="category-icon">🏞️</span><span class="category-title">休闲游戏</span><span class="category-count">2 个游戏</span><span class="category-arrow">▶</span></div><div class="category-games">
+    <div class="game-card" onclick="event.stopPropagation();enterGame('river')"><div class="game-card-top"><h3>🚣 无尽的河流</h3><span class="badge badge-play">开始</span></div><p>在无尽河流中踩着浮木前进，躲避岩石，收集金币。越走越远越难！</p></div>
+    <div class="game-card" onclick="event.stopPropagation();enterGame('endlesslake')"><div class="game-card-top"><h3>🏞️ 无尽之湖</h3><span class="badge badge-play">开始</span></div><p>Facebook 爆火的 H5 跑酷游戏！在湖面上跳跃奔跑，收集金币，挑战极限距离。</p></div>
   </div></div>
-</div>
+  </div>
 
 
-  <div class="category" onclick="toggleCategory(this)"><div class="category-header"><span class="category-icon">🀄</span><span class="category-title">中国象棋</span><span class="category-count">2 个游戏</span><span class="category-arrow">▶</span></div><div class="category-games">
-    <div class="game-card" onclick="event.stopPropagation();enterGame('cc')"><div class="game-card-top"><h3>🔴⚫ 中国象棋</h3><span class="badge badge-play">开始</span></div><p>经典中国象棋，9×10 棋盘，将死对方即胜。</p></div>
-    <div class="game-card" onclick="event.stopPropagation();enterGame('blind')"><div class="game-card-top"><h3>❓ 揭棋</h3><span class="badge badge-play">开始</span></div><p>棋子随机暗置，翻开才知道是什么。翻开即可走棋！</p></div>
-  </div></div>
-<div id="game-view">
+  <div id="game-view">
   <button onclick="backToLanding()" style="align-self:flex-start;margin-bottom:4px;font-size:.75rem;padding:4px 10px">← 返回首页</button>
   <h1 id="game-title"></h1>
   <div class="mode-bar" id="dots-mode-bar">
@@ -139,6 +138,7 @@ select:hover{border-color:#6366f1}
     <span id="timer-wrap" style="display:none">⏱<span id="timer">30</span>s</span>
   </div>
   <canvas id="c"></canvas>
+  <div id="game-iframe-wrap"><iframe id="game-iframe" allow="autoplay"></iframe></div>
   <div class="legend" id="legend-dots"><span><i style="background:rgba(56,189,248,.45)"></i>A（蓝）</span><span><i style="background:rgba(251,146,60,.45)"></i>B（橙）</span><span><i style="background:rgba(255,255,255,.25)"></i>上一手</span></div>
   <div class="legend" id="legend-ttt" style="display:none"><span><i style="background:#38bdf8"></i>X（蓝）</span><span><i style="background:#fb923c"></i>O（橙）</span></div>
   <div class="legend" id="legend-uttt" style="display:none"><span><i style="background:#38bdf8"></i>X（蓝）</span><span><i style="background:#fb923c"></i>O（橙）</span><span><i style="background:rgba(99,102,241,.25)"></i>可下区域</span></div>
@@ -174,8 +174,10 @@ let toastTimeout;function showToast(m){const t=document.getElementById("toast");
 function celebrate(){const cc=document.getElementById("celebrate-canvas");cc.width=window.innerWidth;cc.height=window.innerHeight;const cx=cc.getContext("2d"),cols=["#38bdf8","#fb923c","#facc15","#60a5fa","#c084fc"],ps=[];for(let i=0;i<120;i++)ps.push({x:cc.width/2+(Math.random()-.5)*200,y:cc.height/2,vx:(Math.random()-.5)*8,vy:-Math.random()*12-4,s:Math.random()*6+2,c:cols[Math.floor(Math.random()*cols.length)],l:1,d:.008+Math.random()*.01});(function step(){cx.clearRect(0,0,cc.width,cc.height);let alive=false;for(const p of ps){if(p.l<=0)continue;alive=true;p.x+=p.vx;p.vy+=.25;p.y+=p.vy;p.l-=p.d;cx.globalAlpha=Math.max(0,p.l);cx.fillStyle=p.c;cx.fillRect(p.x-p.s/2,p.y-p.s/2,p.s,p.s)}cx.globalAlpha=1;if(alive)requestAnimationFrame(step);else cx.clearRect(0,0,cc.width,cc.height)})()}
 
 /* ======== NAV ======== */
-function enterGame(g){currentGame=g;document.getElementById("landing").style.display="none";document.getElementById("game-view").style.display="flex";const sh=id=>document.getElementById(id).style.display="",hd=id=>document.getElementById(id).style.display="none";hd("btn-hint");hd("dots-mode-bar");hd("legend-dots");hd("legend-ttt");hd("legend-uttt");hd("btn-timer");hd("timer-wrap");const titles={dots:"🔵 点阵连线方格对战 🟠",ttt:"❌ 井字棋对战 ⭕",uttt:"🔲 超大井字棋",gomoku:"⚫ 五子棋",othello:"⚪ 黑白棋",nim:"🥜 取石子",mancala:"🪨 播棋",domineering:"🀄 多米诺争地",lightsout:"💡 翻转灯",memory:"🃏 记忆翻牌",react:"⚡ 反应对决",cc:"🔴 中国象棋",blind:"❓ 揭棋"};document.getElementById("game-title").textContent=titles[g]||g;if(g==="dots"){sh("dots-mode-bar");sh("legend-dots");sh("btn-timer");initDots()}else if(g==="ttt"){sh("legend-ttt");initTtt()}else if(g==="uttt"){sh("legend-uttt");initUttt()}else if(g==="gomoku"){sh("legend-ttt");initGomoku()}else if(g==="othello"){sh("legend-ttt");initOth()}else if(g==="nim"){sh("legend-ttt");initNim()}else if(g==="mancala"){sh("legend-ttt");initMan()}else if(g==="domineering"){sh("legend-ttt");initDom()}else if(g==="lightsout"){sh("legend-ttt");sh("btn-hint");initLo()}else if(g==="memory"){sh("legend-dots");initMem()}else if(g==="react"){sh("legend-ttt");initReact()}else if(g==="cc"){ccBlind=false;sh("legend-ttt");initCc()}else if(g==="blind"){ccBlind=true;sh("legend-ttt");initBlind()}}
-function backToLanding(){document.getElementById("game-over-overlay").classList.remove("show");document.getElementById("game-view").style.display="none";document.getElementById("landing").style.display="";currentGame=null;stopTimer()}
+function sh(id){document.getElementById(id).style.display=""}
+function hd(id){document.getElementById(id).style.display="none"}
+const titles={dots:"🔵 点阵连线方格对战 🟠",ttt:"❌ 井字棋对战 ⭕",uttt:"🔲 超大井字棋",gomoku:"⚫ 五子棋",othello:"⚪ 黑白棋",nim:"🥜 取石子",mancala:"🪨 播棋",domineering:"🀄 多米诺争地",lightsout:"💡 翻转灯",memory:"🃏 记忆翻牌",react:"⚡ 反应对决",river:"🚣 无尽的河流",breakout:"🧱 打砖块",endlesslake:"🏞️ 无尽之湖"};const gameInit={dots(){sh("dots-mode-bar");sh("legend-dots");sh("btn-timer");initDots()},ttt(){sh("legend-ttt");initTtt()},uttt(){sh("legend-uttt");initUttt()},gomoku(){sh("legend-ttt");initGomoku()},othello(){sh("legend-ttt");initOth()},nim(){sh("legend-ttt");initNim()},mancala(){sh("legend-ttt");initMan()},domineering(){sh("legend-ttt");initDom()},lightsout(){sh("legend-ttt");sh("btn-hint");initLo()},memory(){sh("legend-dots");initMem()},react(){sh("legend-ttt");initReact()},river(){sh("legend-ttt");initRiver()},breakout(){sh("legend-ttt");initBreakout()},endlesslake(){initEndlessLake()}};function enterGame(g){currentGame=g;document.getElementById("landing").style.display="none";document.getElementById("game-view").style.display="flex";hd("btn-hint");hd("dots-mode-bar");hd("legend-dots");hd("legend-ttt");hd("legend-uttt");hd("btn-timer");hd("timer-wrap");document.getElementById("game-title").textContent=titles[g]||g;const init=gameInit[g];if(init)init()}
+function backToLanding(){document.getElementById("game-over-overlay").classList.remove("show");document.getElementById("game-view").style.display="none";document.getElementById("landing").style.display="";currentGame=null;stopTimer();var ifr=document.getElementById("game-iframe");if(ifr)ifr.src="";document.getElementById("game-iframe-wrap").style.display="none";document.getElementById("c").style.display=""}
 
 /* ======== TIMER ======== */
 let timerEnabled=false,timerVal=30,timerInterval=null;
@@ -236,16 +238,16 @@ function updateUtttUI(){document.getElementById("score-a").textContent=scoreA;do
    EVENTS
    ========================================================= */
 let hoverCell=null;
-const draws={dots:drawDots,ttt:drawTtt,uttt:drawUttt,gomoku:drawGomoku,othello:drawOth,nim:drawNim,mancala:drawMan,domineering:drawDom,lightsout:drawLo,memory:drawMem,react:drawReact,cc:drawCc,blind:drawCc};function drawCurrent(){if(draws[currentGame])draws[currentGame]()}
-canvas.addEventListener("mousemove",e=>{if(gameOver||!currentGame)return;const{mx,my}=getPos(e);if(currentGame==="dots")hoverEdge=hitTestDots(mx,my);else if(currentGame==="ttt")hoverCell=hitTestTtt(mx,my);else if(currentGame==="uttt")hoverCell=hitTestUttt(mx,my);else if(currentGame==="gomoku")hoverCell=hitTestGomoku(mx,my);else if(currentGame==="othello")hoverCell=hitTestOth(mx,my);else if(currentGame==="nim")hoverCell=hitTestNim(mx,my);else if(currentGame==="mancala")hoverCell=hitTestMan(mx,my);else if(currentGame==="domineering")hoverCell=hitTestDom(mx,my);else if(currentGame==="lightsout")hoverCell=hitTestLo(mx,my);else if(currentGame==="memory")hoverCell=hitTestMem(mx,my);else if(currentGame==="react")hoverCell=hitTestReact(mx,my);else if(currentGame==="cc"||currentGame==="blind")hoverCell=hitTestCc(mx,my);drawCurrent()});
+const draws={dots:drawDots,ttt:drawTtt,uttt:drawUttt,gomoku:drawGomoku,othello:drawOth,nim:drawNim,mancala:drawMan,domineering:drawDom,lightsout:drawLo,memory:drawMem,react:drawReact,breakout:drawBreakout};function drawCurrent(){if(draws[currentGame])draws[currentGame]()}
+canvas.addEventListener("mousemove",e=>{if(gameOver||!currentGame)return;const{mx,my}=getPos(e);if(currentGame==="dots")hoverEdge=hitTestDots(mx,my);else if(currentGame==="ttt")hoverCell=hitTestTtt(mx,my);else if(currentGame==="uttt")hoverCell=hitTestUttt(mx,my);else if(currentGame==="gomoku")hoverCell=hitTestGomoku(mx,my);else if(currentGame==="othello")hoverCell=hitTestOth(mx,my);else if(currentGame==="nim")hoverCell=hitTestNim(mx,my);else if(currentGame==="mancala")hoverCell=hitTestMan(mx,my);else if(currentGame==="domineering")hoverCell=hitTestDom(mx,my);else if(currentGame==="lightsout")hoverCell=hitTestLo(mx,my);else if(currentGame==="memory")hoverCell=hitTestMem(mx,my);else if(currentGame==="react")hoverCell=hitTestReact(mx,my);else if(currentGame==="breakout")brkMouseX=mx;drawCurrent()});
 canvas.addEventListener("mouseleave",()=>{hoverEdge=null;hoverCell=null;drawCurrent()});
-canvas.addEventListener("click",e=>{if(!currentGame)return;const{mx,my}=getPos(e);if(currentGame==="dots"){const h=hitTestDots(mx,my);if(h)placeEdge(h.type,h.r,h.c)}else if(currentGame==="ttt"){const h=hitTestTtt(mx,my);if(h)tttPlace(h.r,h.c)}else if(currentGame==="uttt"){const h=hitTestUttt(mx,my);if(h)utttPlace(h.r,h.c)}else if(currentGame==="gomoku"){const h=hitTestGomoku(mx,my);if(h)gomokuPlace(h.r,h.c)}else if(currentGame==="othello"){const h=hitTestOth(mx,my);if(h)othPlace(h.r,h.c)}else if(currentGame==="nim"){const h=hitTestNim(mx,my);if(h)nimPlace(h.r,h.c)}else if(currentGame==="mancala"){const h=hitTestMan(mx,my);if(h)manPlace(h.c)}else if(currentGame==="domineering"){const h=hitTestDom(mx,my);if(h)domPlace(h.r,h.c)}else if(currentGame==="lightsout"){const h=hitTestLo(mx,my);if(h)loPlace(h.r,h.c)}else if(currentGame==="memory"){const h=hitTestMem(mx,my);if(h)memPlace(h.r,h.c)}else if(currentGame==="react"){reactClick(hitTestReact(mx,my))}else if(currentGame==="cc"||currentGame==="blind"){const h=hitTestCc(mx,my);if(h)ccPlace(h.r,h.c)}});
-canvas.addEventListener("touchstart",e=>{if(!currentGame)return;e.preventDefault();const{mx,my}=getPos(e);if(currentGame==="dots"){const h=hitTestDots(mx,my);if(h)placeEdge(h.type,h.r,h.c)}else if(currentGame==="ttt"){const h=hitTestTtt(mx,my);if(h)tttPlace(h.r,h.c)}else if(currentGame==="uttt"){const h=hitTestUttt(mx,my);if(h)utttPlace(h.r,h.c)}else if(currentGame==="gomoku"){const h=hitTestGomoku(mx,my);if(h)gomokuPlace(h.r,h.c)}else if(currentGame==="othello"){const h=hitTestOth(mx,my);if(h)othPlace(h.r,h.c)}else if(currentGame==="nim"){const h=hitTestNim(mx,my);if(h)nimPlace(h.r,h.c)}else if(currentGame==="mancala"){const h=hitTestMan(mx,my);if(h)manPlace(h.c)}else if(currentGame==="domineering"){const h=hitTestDom(mx,my);if(h)domPlace(h.r,h.c)}else if(currentGame==="lightsout"){const h=hitTestLo(mx,my);if(h)loPlace(h.r,h.c)}else if(currentGame==="memory"){const h=hitTestMem(mx,my);if(h)memPlace(h.r,h.c)}else if(currentGame==="react"){reactClick(hitTestReact(mx,my))}else if(currentGame==="cc"||currentGame==="blind"){const h=hitTestCc(mx,my);if(h)ccPlace(h.r,h.c)}},{passive:false});
+canvas.addEventListener("click",e=>{if(!currentGame)return;const{mx,my}=getPos(e);if(currentGame==="dots"){const h=hitTestDots(mx,my);if(h)placeEdge(h.type,h.r,h.c)}else if(currentGame==="ttt"){const h=hitTestTtt(mx,my);if(h)tttPlace(h.r,h.c)}else if(currentGame==="uttt"){const h=hitTestUttt(mx,my);if(h)utttPlace(h.r,h.c)}else if(currentGame==="gomoku"){const h=hitTestGomoku(mx,my);if(h)gomokuPlace(h.r,h.c)}else if(currentGame==="othello"){const h=hitTestOth(mx,my);if(h)othPlace(h.r,h.c)}else if(currentGame==="nim"){const h=hitTestNim(mx,my);if(h)nimPlace(h.r,h.c)}else if(currentGame==="mancala"){const h=hitTestMan(mx,my);if(h)manPlace(h.c)}else if(currentGame==="domineering"){const h=hitTestDom(mx,my);if(h)domPlace(h.r,h.c)}else if(currentGame==="lightsout"){const h=hitTestLo(mx,my);if(h)loPlace(h.r,h.c)}else if(currentGame==="memory"){const h=hitTestMem(mx,my);if(h)memPlace(h.r,h.c)}else if(currentGame==="react"){reactClick(hitTestReact(mx,my))}else if(currentGame==="breakout"){hitTestBreakout(mx,my)}});
+canvas.addEventListener("touchstart",e=>{if(!currentGame)return;e.preventDefault();const{mx,my}=getPos(e);if(currentGame==="dots"){const h=hitTestDots(mx,my);if(h)placeEdge(h.type,h.r,h.c)}else if(currentGame==="ttt"){const h=hitTestTtt(mx,my);if(h)tttPlace(h.r,h.c)}else if(currentGame==="uttt"){const h=hitTestUttt(mx,my);if(h)utttPlace(h.r,h.c)}else if(currentGame==="gomoku"){const h=hitTestGomoku(mx,my);if(h)gomokuPlace(h.r,h.c)}else if(currentGame==="othello"){const h=hitTestOth(mx,my);if(h)othPlace(h.r,h.c)}else if(currentGame==="nim"){const h=hitTestNim(mx,my);if(h)nimPlace(h.r,h.c)}else if(currentGame==="mancala"){const h=hitTestMan(mx,my);if(h)manPlace(h.c)}else if(currentGame==="domineering"){const h=hitTestDom(mx,my);if(h)domPlace(h.r,h.c)}else if(currentGame==="lightsout"){const h=hitTestLo(mx,my);if(h)loPlace(h.r,h.c)}else if(currentGame==="memory"){const h=hitTestMem(mx,my);if(h)memPlace(h.r,h.c)}else if(currentGame==="react"){reactClick(hitTestReact(mx,my))}else if(currentGame==="breakout"){hitTestBreakout(mx,my)}},{passive:false});
 document.querySelectorAll("input[name=mode]").forEach(r=>{r.addEventListener("change",()=>{aiMode=r.value==="ai";resetGame()})});
 document.getElementById("size-select").addEventListener("change",e=>{if(currentGame!=="dots")return;const n=parseInt(e.target.value);if(n>=3&&n<=10&&n!==ROWS){ROWS=n;COLS=n;updateDims();resetGame()}});
-function undoMove(){if(!historyStack.length||gameOver)return;sndUndo();if(currentGame==="dots"){if(aiMode&&historyStack.length>=2){historyStack.pop();historyStack.pop()}else historyStack.pop();const s=historyStack.length?historyStack[historyStack.length-1]:null;if(!s){initDots();return}hEdges=s.hEdges;vEdges=s.vEdges;boxes=s.boxes;dotsCurrent=s.current;scoreA=s.scoreA;scoreB=s.scoreB;lastEdge=s.lastEdge;updateDotsUI();drawDots()}else if(currentGame==="ttt"){const s=historyStack.pop();if(!s){initTtt();return}tttBoard=s.b;tttCurrent=s.c;tttWinner=s.w;tttMoves=s.m;tttLastMove=s.lm;gameOver=false;updateTttUI();drawTtt()}else if(currentGame==="uttt"){const s=historyStack.pop();if(!s){initUttt();return}uboard=s.board;uwon=s.won;ucurrent=s.current;uwinner=s.winner;uforced=s.forced;umoves=s.moves;gameOver=false;updateUtttUI();drawUttt()}else if(currentGame==="gomoku"){const s=historyStack.pop();if(!s){initGomoku();return}gBoard=s.b;gCurrent=s.c;gLast=s.l;gameOver=false;updateGomokuUI();drawGomoku()}else if(currentGame==="othello"){const s=historyStack.pop();if(!s){initOth();return}oBoard=s.b;oCurrent=s.c;gameOver=false;updateOthUI();drawOth()}else if(currentGame==="nim"){const s=historyStack.pop();if(!s){initNim();return}nimHeaps=s.h;nimCurrent=s.c;gameOver=false;updateNimUI();drawNim()}else if(currentGame==="mancala"){const s=historyStack.pop();if(!s){initMan();return}manBoard=s.b;manCurrent=s.c;gameOver=false;updateManUI();drawMan()}else if(currentGame==="domineering"){const s=historyStack.pop();if(!s){initDom();return}domBoard=s.b;domCurrent=s.c;gameOver=false;updateDomUI();drawDom()}else if(currentGame==="cc"||currentGame==="blind"){const s=historyStack.pop();if(!s){if(ccBlind)initBlind();else initCc();return}ccBoard=s.b;ccCurrent=s.c;ccRevealed=s.rev;ccSelected=null;ccValidMoves=[];gameOver=false;scoreA=0;scoreB=0;updateCcUI();drawCc()}else if(currentGame==="lightsout"){const s=historyStack.pop();if(!s){initLo();return}loBoard=s.b;loMoves=s.m;gameOver=false;updateLoUI();drawLo()}}
-function resetGame(){document.getElementById("game-over-overlay").classList.remove("show");document.getElementById("celebrate-canvas").getContext("2d").clearRect(0,0,window.innerWidth,window.innerHeight);stopTimer();const inits={dots:initDots,ttt:initTtt,uttt:initUttt,gomoku:initGomoku,othello:initOth,nim:initNim,mancala:initMan,domineering:initDom,lightsout:initLo,memory:initMem,react:initReact,cc:initCc,blind:initBlind};if(inits[currentGame])inits[currentGame]()}
-window.addEventListener("resize",()=>{const resizes={dots:()=>{calcDotsSize();drawDots()},ttt:()=>{calcTttSize();drawTtt()},uttt:()=>{calcUtttSize();drawUttt()},gomoku:()=>{calcGomokuSize();drawGomoku()},othello:()=>{calcOthSize();drawOth()},nim:()=>{calcNimSize();drawNim()},mancala:()=>{calcManSize();drawMan()},domineering:()=>{calcDomSize();drawDom()},lightsout:()=>{calcLoSize();drawLo()},memory:()=>{calcMemSize();drawMem()},cc:()=>{calcCcSize();drawCc()},blind:()=>{calcCcSize();drawCc()},react:()=>{canvas.width=Math.min(window.innerWidth-16,460);canvas.height=Math.min(window.innerHeight-220,360);drawReact()}};if(resizes[currentGame])resizes[currentGame]()});
+function undoMove(){if(!historyStack.length||gameOver)return;sndUndo();if(currentGame==="dots"){if(aiMode&&historyStack.length>=2){historyStack.pop();historyStack.pop()}else historyStack.pop();const s=historyStack.length?historyStack[historyStack.length-1]:null;if(!s){initDots();return}hEdges=s.hEdges;vEdges=s.vEdges;boxes=s.boxes;dotsCurrent=s.current;scoreA=s.scoreA;scoreB=s.scoreB;lastEdge=s.lastEdge;updateDotsUI();drawDots()}else if(currentGame==="ttt"){const s=historyStack.pop();if(!s){initTtt();return}tttBoard=s.b;tttCurrent=s.c;tttWinner=s.w;tttMoves=s.m;tttLastMove=s.lm;gameOver=false;updateTttUI();drawTtt()}else if(currentGame==="uttt"){const s=historyStack.pop();if(!s){initUttt();return}uboard=s.board;uwon=s.won;ucurrent=s.current;uwinner=s.winner;uforced=s.forced;umoves=s.moves;gameOver=false;updateUtttUI();drawUttt()}else if(currentGame==="gomoku"){const s=historyStack.pop();if(!s){initGomoku();return}gBoard=s.b;gCurrent=s.c;gLast=s.l;gameOver=false;updateGomokuUI();drawGomoku()}else if(currentGame==="othello"){const s=historyStack.pop();if(!s){initOth();return}oBoard=s.b;oCurrent=s.c;gameOver=false;updateOthUI();drawOth()}else if(currentGame==="nim"){const s=historyStack.pop();if(!s){initNim();return}nimHeaps=s.h;nimCurrent=s.c;gameOver=false;updateNimUI();drawNim()}else if(currentGame==="mancala"){const s=historyStack.pop();if(!s){initMan();return}manBoard=s.b;manCurrent=s.c;gameOver=false;updateManUI();drawMan()}else if(currentGame==="domineering"){const s=historyStack.pop();if(!s){initDom();return}domBoard=s.b;domCurrent=s.c;gameOver=false;updateDomUI();drawDom()}else if(currentGame==="lightsout"){const s=historyStack.pop();if(!s){initLo();return}loBoard=s.b;loMoves=s.m;gameOver=false;updateLoUI();drawLo()}}
+function resetGame(){document.getElementById("game-over-overlay").classList.remove("show");document.getElementById("celebrate-canvas").getContext("2d").clearRect(0,0,window.innerWidth,window.innerHeight);stopTimer();const inits={dots:initDots,ttt:initTtt,uttt:initUttt,gomoku:initGomoku,othello:initOth,nim:initNim,mancala:initMan,domineering:initDom,lightsout:initLo,memory:initMem,react:initReact,breakout:initBreakout};if(inits[currentGame])inits[currentGame]()}
+window.addEventListener("resize",()=>{const resizes={dots:()=>{calcDotsSize();drawDots()},ttt:()=>{calcTttSize();drawTtt()},uttt:()=>{calcUtttSize();drawUttt()},gomoku:()=>{calcGomokuSize();drawGomoku()},othello:()=>{calcOthSize();drawOth()},nim:()=>{calcNimSize();drawNim()},mancala:()=>{calcManSize();drawMan()},domineering:()=>{calcDomSize();drawDom()},lightsout:()=>{calcLoSize();drawLo()},memory:()=>{calcMemSize();drawMem()},react:()=>{canvas.width=Math.min(window.innerWidth-16,460);canvas.height=Math.min(window.innerHeight-220,360);drawReact()},breakout:()=>{calcBrkSize();drawBreakout()}};if(resizes[currentGame])resizes[currentGame]()});
 /* =========================================================
    4) GOMOKU (五子棋)
    ========================================================= */
@@ -330,108 +332,302 @@ function updateDomUI(){document.getElementById("score-a").textContent=scoreA;doc
 
 /* =========================================================
    /* =========================================================
-   CHINESE CHESS (中国象棋 + 揭棋)
+   10a) BREAKOUT (打砖块)
    ========================================================= */
-const CC_COLS=9,CC_ROWS=10;
-let ccBoard=[],ccCurrent="R",ccSelected=null,ccValidMoves=[],ccGameOverFlag=false;
-let ccCellSize=0,ccPad=0,ccBlind=false,ccRevealed=null;
-const CC_NAMES={K:"帥",A:"仕",B:"相",N:"馬",R:"車",C:"炮",P:"兵",k:"將",a:"士",b:"象",n:"馬",r:"車",c:"砲",p:"卒"};
-function ccIsRed(p){return p&&p>="A"&&p<="Z"}
-function ccIsBlack(p){return p&&p>="a"&&p<="z"}
-function ccOwner(p){if(!p)return null;return ccIsRed(p)?"R":"B"}
-function ccInitBoard(){const b=Array.from({length:CC_ROWS},()=>Array(CC_COLS).fill(null));
-  b[0][0]="r";b[0][1]="n";b[0][2]="b";b[0][3]="a";b[0][4]="k";b[0][5]="a";b[0][6]="b";b[0][7]="n";b[0][8]="r";
-  b[2][1]="c";b[2][7]="c";b[3][0]="p";b[3][2]="p";b[3][4]="p";b[3][6]="p";b[3][8]="p";
-  b[9][0]="R";b[9][1]="N";b[9][2]="B";b[9][3]="A";b[9][4]="K";b[9][5]="A";b[9][6]="B";b[9][7]="N";b[9][8]="R";
-  b[7][1]="C";b[7][7]="C";b[6][0]="P";b[6][2]="P";b[6][4]="P";b[6][6]="P";b[6][8]="P";return b}
-function calcCcSize(){const w=Math.min(window.innerWidth-16,460),h=window.innerHeight-240;ccCellSize=Math.max(Math.floor(Math.min(w/CC_COLS,h/(CC_ROWS+1))),28);ccPad=Math.round(ccCellSize*.7);canvas.width=ccPad*2+(CC_COLS-1)*ccCellSize;canvas.height=ccPad*2+(CC_ROWS-1)*ccCellSize}
-function ccX(c){return ccPad+c*ccCellSize}function ccY(r){return ccPad+r*ccCellSize}
-function initCc(){ccBoard=ccInitBoard();ccCurrent="R";ccSelected=null;ccValidMoves=[];ccGameOverFlag=false;ccRevealed=Array.from({length:CC_ROWS},()=>Array(CC_COLS).fill(false));scoreA=0;scoreB=0;gameOver=false;historyStack=[];hoverCell=null;calcCcSize();updateCcUI();drawCc()}
-function initBlind(){ccBlind=true;const standard=ccInitBoard();const rp=["K","A","A","B","B","N","N","R","R","C","C","P","P","P","P","P"];const bp=["k","a","a","b","b","n","n","r","r","c","c","p","p","p","p","p"];for(let i=rp.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[rp[i],rp[j]]=[rp[j],rp[i]]}for(let i=bp.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[bp[i],bp[j]]=[bp[j],bp[i]]}ccBoard=Array.from({length:CC_ROWS},()=>Array(CC_COLS).fill(null));ccRevealed=Array.from({length:CC_ROWS},()=>Array(CC_COLS).fill(false));let ri=0,bi=0;for(let r=0;r<CC_ROWS;r++)for(let c=0;c<CC_COLS;c++){if(standard[r][c]){if(ccIsRed(standard[r][c])){ccBoard[r][c]=rp[ri++]}else{ccBoard[r][c]=bp[bi++]}}}ccCurrent="R";ccSelected=null;ccValidMoves=[];ccGameOverFlag=false;scoreA=0;scoreB=0;gameOver=false;historyStack=[];hoverCell=null;calcCcSize();updateCcUI();drawCc()}
-function ccInPalace(r,c,owner){if(owner==="R")return r>=7&&r<=9&&c>=3&&c<=5;return r>=0&&r<=2&&c>=3&&c<=5}
-function ccCrossedRiver(r,owner){if(owner==="R")return r<=4;return r>=5}
-function ccRawMoves(board,r,c){const p=board[r][c];if(!p)return[];const owner=ccOwner(p);const type=p.toUpperCase();const moves=[];
-  const canMoveTo=(tr,tc)=>{if(tr<0||tr>=CC_ROWS||tc<0||tc>=CC_COLS)return false;const t=board[tr][tc];return!t||ccOwner(t)!==owner};
-  if(type==="K"){for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){const nr=r+dr,nc=c+dc;if(ccInPalace(nr,nc,owner)&&canMoveTo(nr,nc))moves.push([nr,nc])}const dir=owner==="R"?-1:1;let nr=r+dir;while(nr>=0&&nr<CC_ROWS){if(board[nr][c]){if(board[nr][c].toUpperCase()==="K")moves.push([nr,c]);break}nr+=dir}}
-  if(type==="A"){for(const[dr,dc]of[[-1,-1],[-1,1],[1,-1],[1,1]]){const nr=r+dr,nc=c+dc;if(ccInPalace(nr,nc,owner)&&canMoveTo(nr,nc))moves.push([nr,nc])}}
-  if(type==="B"){for(const[dr,dc]of[[-2,-2],[-2,2],[2,-2],[2,2]]){const nr=r+dr,nc=c+dc,br=r+dr/2,bc=c+dc/2;if(nr>=0&&nr<CC_ROWS&&nc>=0&&nc<CC_COLS&&!board[br][bc]){if((owner==="R"&&nr>=5)||(owner==="B"&&nr<=4)){if(canMoveTo(nr,nc))moves.push([nr,nc])}}}}
-  if(type==="N"){for(const[dr,dc,bdr,bdc]of[[-2,-1,-1,0],[-2,1,-1,0],[2,-1,1,0],[2,1,1,0],[-1,-2,0,-1],[-1,2,0,1],[1,-2,0,-1],[1,2,0,1]]){const nr=r+dr,nc=c+dc,br=r+bdr,bc=c+bdc;if(nr>=0&&nr<CC_ROWS&&nc>=0&&nc<CC_COLS&&!board[br][bc]&&canMoveTo(nr,nc))moves.push([nr,nc])}}
-  if(type==="R"){for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){let nr=r+dr,nc=c+dc;while(nr>=0&&nr<CC_ROWS&&nc>=0&&nc<CC_COLS){if(board[nr][nc]){if(ccOwner(board[nr][nc])!==owner)moves.push([nr,nc]);break}moves.push([nr,nc]);nr+=dr;nc+=dc}}}
-  if(type==="C"){for(const[dr,dc]of[[-1,0],[1,0],[0,-1],[0,1]]){let nr=r+dr,nc=c+dc,jumped=false;while(nr>=0&&nr<CC_ROWS&&nc>=0&&nc<CC_COLS){if(!jumped){if(board[nr][nc])jumped=true;else moves.push([nr,nc])}else{if(board[nr][nc]){if(ccOwner(board[nr][nc])!==owner)moves.push([nr,nc]);break}}nr+=dr;nc+=dc}}}
-  if(type==="P"){const dir=owner==="R"?-1:1;if(r+dir>=0&&r+dir<CC_ROWS&&canMoveTo(r+dir,c))moves.push([r+dir,c]);if(ccCrossedRiver(r,owner)){if(c-1>=0&&canMoveTo(r,c-1))moves.push([r,c-1]);if(c+1<CC_COLS&&canMoveTo(r,c+1))moves.push([r,c+1])}}
-  return moves}
-function ccIsAttacked(board,r,c,byOwner){for(let rr=0;rr<CC_ROWS;rr++)for(let cc=0;cc<CC_COLS;cc++){const p=board[rr][cc];if(!p||ccOwner(p)!==byOwner)continue;if(ccRawMoves(board,rr,cc).some(m=>m[0]===r&&m[1]===c))return true}return false}
-function ccFindKing(board,owner){const t=owner==="R"?"K":"k";for(let r=0;r<CC_ROWS;r++)for(let c=0;c<CC_COLS;c++)if(board[r][c]===t)return[r,c];return null}
-function ccInCheck(board,owner){const k=ccFindKing(board,owner);if(!k)return false;return ccIsAttacked(board,k[0],k[1],owner==="R"?"B":"R")}
-function ccLegalMoves(board,r,c){const p=board[r][c];if(!p)return[];const owner=ccOwner(p);return ccRawMoves(board,r,c).filter(([tr,tc])=>{const nb=board.map(row=>[...row]);nb[tr][tc]=nb[r][c];nb[r][c]=null;return!ccInCheck(nb,owner)})}
-function ccHasLegalMoves(board,owner){for(let r=0;r<CC_ROWS;r++)for(let c=0;c<CC_COLS;c++){if(board[r][c]&&ccOwner(board[r][c])===owner&&ccLegalMoves(board,r,c).length)return true}return false}
-function ccPlace(r,c){
+const BRK_ROWS=5,BRK_COLS=10,BRK_TOP=60,BRK_PAD=20,BRK_LIVES=3;
+let brkW=0,brkH=0,brkCellW=0,brkCellH=0,brkPadX=0;
+let brkBricks=[],brkBallX=0,brkBallY=0,brkBallDX=0,brkBallDY=0,brkBallR=0;
+let brkPaddleW=0,brkPaddleX=0,brkLives=0,brkStarted=false,brkAnimId=null;
+let brkMouseX=-1,brkSpeed=4;
+function calcBrkSize(){brkW=Math.min(window.innerWidth-16,460);brkH=Math.min(window.innerHeight-220,420);canvas.width=brkW;canvas.height=brkH;brkPadX=BRK_PAD;brkCellW=Math.floor((brkW-2*BRK_PAD)/BRK_COLS);brkCellH=Math.floor(brkH*0.04);brkPaddleW=Math.floor(brkW*0.15);brkBallR=Math.max(5,Math.floor(brkCellW*0.22))}
+function initBreakout(){gameOver=false;scoreA=0;scoreB=0;historyStack=[];brkLives=BRK_LIVES;brkStarted=false;brkSpeed=4;if(brkAnimId){cancelAnimationFrame(brkAnimId);brkAnimId=null}calcBrkSize();brkBricks=[];for(let r=0;r<BRK_ROWS;r++)for(let c=0;c<BRK_COLS;c++){const hue=r*360/BRK_ROWS;brkBricks.push({r,c,alive:true,color:"hsl("+hue+",70%,55%)",points:BRK_ROWS-r})}brkPaddleX=(brkW-brkPaddleW)/2;resetBrkBall();updateBrkUI();drawBreakout()}
+function resetBrkBall(){brkBallX=brkW/2;brkBallY=brkH-60;const a=-Math.PI/2+(Math.random()-0.5)*0.6;brkBallDX=brkSpeed*Math.cos(a);brkBallDY=brkSpeed*Math.sin(a);brkStarted=false}
+function drawBreakout(){ctx.clearRect(0,0,canvas.width,canvas.height);const padTop=BRK_TOP;for(const b of brkBricks){if(!b.alive)continue;const x=brkPadX+b.c*brkCellW,y=padTop+b.r*brkCellH;ctx.fillStyle=b.color;ctx.beginPath();ctx.roundRect(x+1,y+1,brkCellW-2,brkCellH-2,3);ctx.fill();ctx.fillStyle="rgba(255,255,255,0.15)";ctx.fillRect(x+2,y+2,brkCellW-4,brkCellH/2-2)}ctx.fillStyle="#e2e8f0";ctx.beginPath();ctx.arc(brkBallX,brkBallY,brkBallR,0,Math.PI*2);ctx.fill();ctx.fillStyle="#6366f1";const py=brkH-30;ctx.beginPath();ctx.roundRect(brkPaddleX,py-brkCellH/2,brkPaddleW,brkCellH,4);ctx.fill();ctx.fillStyle="#fb923c";ctx.font="16px sans-serif";ctx.textAlign="left";ctx.textBaseline="top";ctx.fillText("\u2764\uFE0F".repeat(brkLives),10,10);ctx.textAlign="right";ctx.fillStyle="#e2e8f0";ctx.fillText("\u5F97\u5206: "+scoreA,brkW-10,10);if(!brkStarted){ctx.textAlign="center";ctx.fillStyle="#94a3b8";ctx.font="16px sans-serif";ctx.fillText("\u70B9\u51FB\u6216\u89E6\u6471\u5C4F\u5E55\u5F00\u59CB",brkW/2,brkH-70)}}
+function brkStep(){if(gameOver||!brkStarted)return;brkPaddleX=Math.max(0,Math.min(brkW-brkPaddleW,brkMouseX-brkPaddleW/2));brkBallX+=brkBallDX;brkBallY+=brkBallDY;if(brkBallX-brkBallR<0){brkBallX=brkBallR;brkBallDX=Math.abs(brkBallDX)}if(brkBallX+brkBallR>brkW){brkBallX=brkW-brkBallR;brkBallDX=-Math.abs(brkBallDX)}if(brkBallY-brkBallR<0){brkBallY=brkBallR;brkBallDY=Math.abs(brkBallDY)}const py=brkH-30,padTop2=py-brkCellH/2;if(brkBallDY>0&&brkBallY+brkBallR>=padTop2&&brkBallY-brkBallR<=py+brkCellH/2&&brkBallX>=brkPaddleX-brkBallR&&brkBallX<=brkPaddleX+brkPaddleW+brkBallR){brkBallY=padTop2-brkBallR;const hit=Math.max(0,Math.min(1,(brkBallX-brkPaddleX)/brkPaddleW));const ang=(hit-0.5)*Math.PI*0.7;const sp=Math.sqrt(brkBallDX*brkBallDX+brkBallDY*brkBallDY);brkBallDX=sp*Math.sin(ang);brkBallDY=-sp*Math.cos(ang)}const padTop=BRK_TOP;for(const b of brkBricks){if(!b.alive)continue;const bx=brkPadX+b.c*brkCellW,by=padTop+b.r*brkCellH;if(brkBallX+brkBallR>bx&&brkBallX-brkBallR<bx+brkCellW&&brkBallY+brkBallR>by&&brkBallY-brkBallR<by+brkCellH){b.alive=false;scoreA+=b.points;const oL=brkBallX-bx,oR=bx+brkCellW-brkBallX,oT=brkBallY-by,oB=by+brkCellH-brkBallY;const m=Math.min(oL,oR,oT,oB);if(m===oL||m===oR)brkBallDX=-brkBallDX;else brkBallDY=-brkBallDY;brkSpeed=Math.min(7,brkSpeed+0.03);sndBox();break}}if(Math.abs(brkBallDY)<0.5){brkBallDY=brkBallDY>=0?0.8:-0.8}if(brkBallY-brkBallR>brkH){brkLives--;if(brkLives<=0){updateBrkUI();endBrkGame();return}showToast("\u5269\u4F59 "+brkLives+" \u6761\u547D");resetBrkBall()}if(brkBricks.every(b=>!b.alive)){scoreA+=brkLives*50;updateBrkUI();endBrkGame();return}updateBrkUI();drawBreakout();brkAnimId=requestAnimationFrame(brkStep)}
+function hitTestBreakout(mx,my){if(!brkStarted){brkStarted=true;brkStep();return}brkMouseX=mx}
+function endBrkGame(){gameOver=true;if(brkAnimId){cancelAnimationFrame(brkAnimId);brkAnimId=null}const t=document.getElementById("go-title"),d=document.getElementById("go-detail");if(brkBricks.every(b=>!b.alive)){t.textContent="\uD83C\uDF89 \u5168\u90E8\u6D88\u9664\uFF01";d.textContent="\u5F97\u5206: "+scoreA}else{t.textContent="\uD83D\uDCA5 \u6E38\u620F\u7ED3\u675F";d.textContent="\u5F97\u5206: "+scoreA}document.getElementById("game-over-overlay").classList.add("show");sndGameOver();celebrate()}
+function updateBrkUI(){document.getElementById("score-a").textContent=scoreA;document.getElementById("score-b").textContent=brkLives;document.getElementById("label-a").textContent="\u5F97\u5206\uFF1A";document.getElementById("label-b").textContent="\u751F\u547D\uFF1A";const l=document.getElementById("turn-label");l.textContent="\u6253\u7816\u5757";l.className="turn-indicator turn-a"}
+/* =========================================================
+   13) ENDLESS RIVER (无尽的河流)
+   ========================================================= */
+const RIVER_LIVES_INIT=3,RIVER_ROAD_H=18;
+let riverW=0,riverH=0,camX=0,riverScore=0,riverCoins=0,rLives=3;
+let rRoads=[],rGaps=[],rObstacles=[],rCoinArr=[],rMechs=[];
+let rPlayerX=0,rPlayerY=0,rVX=0,rVY=0,rOnRoad=null,rOnGround=false;
+let rJumpCount=0,rFacing=1,rFrame=0,rLastClick=0,rStarted=false;
+let rDblClickTime=0;
+const R_GRAV=0.6,R_JUMP=-11,R_DBLJUMP=-9,R_SPEED=2.8,R_FRICTION=0.85;
+
+function initRiver(){
+  gameOver=false;scoreA=0;scoreB=0;historyStack=[];
+  riverW=Math.min(window.innerWidth-16,500);
+  riverH=Math.min(window.innerHeight-220,520);
+  canvas.width=riverW;canvas.height=riverH;
+  camX=0;riverScore=0;riverCoins=0;rLives=RIVER_LIVES_INIT;
+  rRoads=[];rGaps=[];rObstacles=[];rCoinArr=[];rMechs=[];
+  rVX=0;rVY=0;rOnRoad=null;rOnGround=false;rJumpCount=0;rFacing=1;rFrame=0;
+  rLastClick=0;rStarted=false;rDblClickTime=0;
+  let rx=-100;
+  for(let i=0;i<12;i++){
+    const w=180+Math.random()*160;
+    rRoads.push({x:rx,y:riverH-100-i*35+Math.random()*20,w,h:RIVER_ROAD_H,type:"normal"});
+    rx+=w+50+Math.random()*60
+  }
+  rPlayerX=rRoads[0].x+60;rPlayerY=rRoads[0].y-36;rOnRoad=rRoads[0];
+  genRiverContent(rRoads[rRoads.length-1].x+rRoads[rRoads.length-1].w+100);
+  updateRiverUI();drawRiver();rStarted=true;riverLoop()
+}
+
+function genRiverContent(untilX){
+  while(true){
+    const last=rRoads[rRoads.length-1];
+    const endX=last.x+last.w;
+    if(endX>untilX+600)break;
+    const gap=70+Math.random()*80;
+    const nx=endX+gap;
+    const ny=Math.max(100,Math.min(riverH-120,last.y+(Math.random()-0.5)*70));
+    const nw=140+Math.random()*180;
+    const types=["normal","moving","narrow","falling"];
+    const type=types[Math.floor(Math.random()*types.length)];
+    const road={x:nx,y:ny,w:nw,h:RIVER_ROAD_H,type};
+    if(type==="moving"){road.oy=ny;road.range=30+Math.random()*25;road.spd=0.015+Math.random()*0.015}
+    if(type==="falling"){road.fallTimer=0;road.fallen=false;road.vy=0}
+    if(type==="narrow")road.h=12;
+    rRoads.push(road);
+    if(Math.random()<0.45){
+      const ox=nx+30+Math.random()*(nw-60);
+      rObstacles.push({x:ox,y:ny-25,w:24,h:25,type:Math.random()<0.5?"spike":"box"})
+    }
+    const nCoins=1+Math.floor(Math.random()*3);
+    for(let j=0;j<nCoins;j++){
+      if(Math.random()<0.5)continue;
+      rCoinArr.push({x:nx+20+Math.random()*(nw-40),y:ny-50-Math.random()*40,r:8,t:Math.random()*100})
+    }
+    if(Math.random()<0.15){
+      rMechs.push({x:nx+nw/2,y:ny-6,r:12,type:"spring",used:false})
+    }
+  }
+}
+
+function drawRiver(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const cx=camX;
+  // sky
+  const sky=ctx.createLinearGradient(0,0,0,riverH);
+  sky.addColorStop(0,"#0c4a6e");sky.addColorStop(0.35,"#164e63");sky.addColorStop(1,"#155e75");
+  ctx.fillStyle=sky;ctx.fillRect(0,0,riverW,riverH);
+  // river
+  const riverY=riverH*0.65;
+  ctx.fillStyle="#0e7490";ctx.fillRect(0,riverY,riverW,riverH-riverY);
+  ctx.strokeStyle="rgba(255,255,255,0.06)";ctx.lineWidth=2;
+  for(let i=0;i<8;i++){
+    ctx.beginPath();
+    const wy=riverY+i*((riverH-riverY)/8);
+    for(let x=0;x<=riverW;x+=8){
+      const yy=wy+Math.sin((x+rFrame*1.5+i*25)*0.025)*6;
+      x===0?ctx.moveTo(x,yy):ctx.lineTo(x,yy)
+    }
+    ctx.stroke()
+  }
+  // clouds
+  ctx.fillStyle="rgba(255,255,255,0.05)";
+  for(let i=0;i<4;i++){
+    const clx=((i*200-rFrame*0.3-cx*0.05)%(riverW+200)+riverW+200)%(riverW+200)-100;
+    ctx.beginPath();ctx.ellipse(clx,30+i*20,60+i*15,15,0,0,Math.PI*2);ctx.fill()
+  }
+  // roads
+  for(const rd of rRoads){
+    const sx=rd.x-cx,sy=rd.y;
+    if(sx+rd.w<-20||sx>riverW+20)continue;
+    ctx.fillStyle="#78716c";ctx.beginPath();ctx.roundRect(sx,sy,rd.w,rd.h,3);ctx.fill();
+    ctx.fillStyle="#a8a29e";ctx.fillRect(sx+2,sy+1,rd.w-4,3);
+    if(rd.type==="moving"){ctx.fillStyle="rgba(56,189,248,0.2)";ctx.fillRect(sx+4,sy+3,rd.w-8,rd.h-6)}
+    if(rd.type==="falling"&&rd.fallen){ctx.globalAlpha=0.3;ctx.fillStyle="#57534e";ctx.fillRect(sx,sy,rd.w,rd.h);ctx.globalAlpha=1}
+    if(rd.type==="narrow"){ctx.fillStyle="rgba(251,146,60,0.2)";ctx.fillRect(sx+2,sy+1,rd.w-4,rd.h-2)}
+  }
+  // obstacles
+  for(const ob of rObstacles){
+    const sx=ob.x-cx;
+    if(sx+ob.w<-10||sx>riverW+10)continue;
+    if(ob.type==="spike"){
+      ctx.fillStyle="#dc2626";
+      ctx.beginPath();ctx.moveTo(sx,ob.y+ob.h);ctx.lineTo(sx+ob.w/2,ob.y);ctx.lineTo(sx+ob.w,ob.y+ob.h);ctx.fill();
+      ctx.fillStyle="#ef4444";
+      ctx.beginPath();ctx.moveTo(sx+4,ob.y+ob.h);ctx.lineTo(sx+ob.w/2,ob.y+5);ctx.lineTo(sx+ob.w-4,ob.y+ob.h);ctx.fill()
+    }else{
+      ctx.fillStyle="#78716c";ctx.fillRect(sx,ob.y,ob.w,ob.h);
+      ctx.fillStyle="#a8a29e";ctx.fillRect(sx+2,ob.y+2,ob.w-4,ob.h/2-2);
+      ctx.fillStyle="#ef4444";ctx.fillRect(sx+ob.w/2-3,ob.y-8,6,8);
+      ctx.fillStyle="#dc2626";ctx.beginPath();ctx.arc(sx+ob.w/2,ob.y-10,4,0,Math.PI*2);ctx.fill()
+    }
+  }
+  // springs
+  for(const m of rMechs){
+    const sx=m.x-cx;
+    if(sx<-20||sx>riverW+20)continue;
+    ctx.fillStyle="#facc15";ctx.fillRect(sx-6,m.y,12,6);
+    ctx.fillStyle="#a8a29e";ctx.fillRect(sx-4,m.y+6,8,m.r);
+    if(!m.used){ctx.fillStyle="#fde68a";ctx.beginPath();ctx.arc(sx,m.y-3,5,0,Math.PI*2);ctx.fill()}
+  }
+  // coins
+  for(const c of rCoinArr){
+    if(c.c)continue;
+    const sx=c.x-cx;
+    if(sx<-15||sx>riverW+15)continue;
+    const pulse=1+Math.sin((rFrame+c.t)*0.08)*0.18;
+    ctx.fillStyle="#facc15";ctx.beginPath();ctx.arc(sx,c.y,c.r*pulse,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#fde68a";ctx.beginPath();ctx.arc(sx-2,c.y-2,c.r*0.4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#92400e";ctx.font="bold 10px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText("$",sx,c.y+1)
+  }
+  // player
+  const px=rPlayerX-cx,py=rPlayerY;
+  if(px>-30&&px<riverW+30){
+    ctx.fillStyle="rgba(0,0,0,0.15)";
+    ctx.beginPath();ctx.ellipse(px,py+34,10,3,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#38bdf8";ctx.beginPath();ctx.roundRect(px-9,py+4,18,26,5);ctx.fill();
+    ctx.fillStyle="#fde68a";ctx.beginPath();ctx.arc(px,py,10,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#1e293b";ctx.beginPath();ctx.arc(px+rFacing*3,py-1,2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#dc2626";ctx.beginPath();ctx.arc(px,py-10,8,Math.PI,0);ctx.fill();
+    if(!rOnGround){
+      ctx.fillStyle="#38bdf8";
+      ctx.beginPath();ctx.moveTo(px-8,py+30);ctx.lineTo(px-14,py+36);ctx.lineTo(px-6,py+34);ctx.fill();
+      ctx.beginPath();ctx.moveTo(px+8,py+30);ctx.lineTo(px+14,py+36);ctx.lineTo(px+6,py+34);ctx.fill()
+    }
+  }
+  // lives
+  ctx.fillStyle="#ef4444";ctx.font="16px sans-serif";ctx.textAlign="left";ctx.textBaseline="top";
+  ctx.fillText("\u2764\uFE0F".repeat(rLives),10,10);
+  if(!rStarted){
+    ctx.fillStyle="rgba(0,0,0,0.4)";ctx.fillRect(0,0,riverW,riverH);
+    ctx.fillStyle="#fff";ctx.font="bold 22px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText("\u65E0\u5C3D\u7684\u6CB3\u6D41",riverW/2,riverH/2-30);
+    ctx.font="15px sans-serif";ctx.fillText("\u70B9\u51FB\u5C4F\u5E55\u5F00\u59CB",riverW/2,riverH/2+10)
+  }
+}
+
+function riverLoop(){
+  if(gameOver||currentGame!=="river")return;
+  rFrame++;
+  camX+=R_SPEED;
+  riverScore=Math.floor(camX/20);
+  // moving roads
+  for(const rd of rRoads){
+    if(rd.type==="moving"){
+      rd.y=rd.oy+Math.sin(rFrame*rd.spd)*rd.range
+    }
+  }
+  // player physics
+  rVY+=R_GRAV;
+  rPlayerX+=rVX;rVX*=R_FRICTION;
+  rPlayerY+=rVY;
+  rOnGround=false;rOnRoad=null;
+  if(rVY>=0){
+    for(const rd of rRoads){
+      if(rd.type==="falling"&&rd.fallen)continue;
+      const rl=rd.x,rr=rd.x+rd.w;
+      if(rPlayerX>rl-5&&rPlayerX<rr+5&&rPlayerY+32>=rd.y&&rPlayerY+32<=rd.y+rd.h+10){
+        rPlayerY=rd.y-32;rVY=0;rOnGround=true;rOnRoad=rd;rJumpCount=0;
+        if(rd.type==="falling"&&!rd.fallen)rd.fallTimer++;
+        break
+      }
+    }
+  }
+  // falling road logic
+  for(const rd of rRoads){
+    if(rd.type==="falling"&&rd.fallTimer>20&&!rd.fallen){rd.fallen=true;rd.vy=0}
+    if(rd.fallen){rd.vy+=0.3;rd.y+=rd.vy}
+  }
+  // spring collision
+  for(const m of rMechs){
+    if(m.used)continue;
+    if(Math.abs(rPlayerX-m.x)<16&&Math.abs((rPlayerY+32)-m.y)<12&&rVY>=0){
+      rVY=-16;m.used=true
+    }
+  }
+  // obstacle collision
+  for(const ob of rObstacles){
+    if(Math.abs(rPlayerX-(ob.x+ob.w/2))<14&&Math.abs((rPlayerY+16)-(ob.y+ob.h/2))<16){
+      rLives--;rVY=-8;rPlayerY-=30;
+      if(rLives<=0){updateRiverUI();endRiverGame();return}
+      riverObstacles=rObstacles.filter(o=>o!==ob);
+      showToast("\u2764\uFE0F \u78B0\u5230\u969C\u788D\u7269\uFF0C\u5269\u4F59 "+rLives+" \u6761\u547D");
+      break
+    }
+  }
+  // coin collision
+  for(const c of rCoinArr){
+    if(c.c)continue;
+    if(Math.abs(rPlayerX-c.x)<18&&Math.abs((rPlayerY+12)-c.y)<22){
+      c.c=true;riverCoins++;sndBox()
+    }
+  }
+  // fall check
+  if(rPlayerY>riverH+50){
+    rLives--;
+    if(rLives<=0){updateRiverUI();endRiverGame();return}
+    showToast("\u2764\uFE0F \u843D\u5165\u6CB3\u4E2D\uFF0C\u5269\u4F59 "+rLives+" \u6761\u547D");
+    const nearRoad=rRoads.find(rd=>Math.abs(rd.x+rd.w/2-camX-riverW/2)<300&&!rd.fallen);
+    if(nearRoad){rPlayerX=nearRoad.x+50;rPlayerY=nearRoad.y-40}
+    else{rPlayerX=camX+riverW/2;rPlayerY=riverH/2}
+    rVY=-4
+  }
+  // generate content
+  genRiverContent(camX+riverW+400);
+  // cleanup
+  const cleanX=camX-300;
+  rRoads=rRoads.filter(r=>r.x+r.w>cleanX);
+  rObstacles=rObstacles.filter(o=>o.x+o.w>cleanX);
+  rCoinArr=rCoinArr.filter(c=>c.x>cleanX&&!c.c);
+  rMechs=rMechs.filter(m=>m.x>cleanX);
+  scoreA=riverScore;scoreB=riverCoins;
+  updateRiverUI();drawRiver();
+  requestAnimationFrame(riverLoop)
+}
+
+function hitTestRiver(mx,my){
   if(gameOver)return;
-  // Already selected: try to move or reselect
-  if(ccSelected){
-    const[selR,selC]=ccSelected;
-    // Click same piece to deselect
-    if(r===selR&&c===selC){ccSelected=null;ccValidMoves=[];drawCc();return}
-    // Click own revealed piece to reselect
-    if(ccBoard[r][c]&&ccOwner(ccBoard[r][c])===ccCurrent&&(!ccBlind||ccRevealed[r][c])){
-      ccSelected=[r,c];ccValidMoves=ccLegalMoves(ccBoard,r,c);drawCc();return}
-    // Click own unrevealed piece in blind: flip it = end current selection, flip new piece
-    if(ccBlind&&ccBoard[r][c]&&ccOwner(ccBoard[r][c])===ccCurrent&&!ccRevealed[r][c]){
-      ccSelected=null;ccValidMoves=[];
-      ccRevealed[r][c]=true;sndDraw();
-      const moves=ccLegalMoves(ccBoard,r,c);
-      if(moves.length){ccSelected=[r,c];ccValidMoves=moves;drawCc()}
-      else{ccEndTurnNoFlip()}
-      return}
-    // Try to move to target (can capture unrevealed opponent pieces)
-    if(ccValidMoves.some(m=>m[0]===r&&m[1]===c)){
-      ccDoMove(selR,selC,r,c);return}
-    ccSelected=null;ccValidMoves=[];drawCc();return;
+  if(!rStarted){rStarted=true;return}
+  const now=Date.now();
+  if(now-rLastClick<300&&rOnGround){
+    rVY=R_DBLJUMP;rOnGround=false;rJumpCount=2;showToast("\uD83D\uDCA8 \u4E8C\u6BB5\u8DF3\uFF01")
+  }else if(rJumpCount<1){
+    rVY=R_JUMP;rOnGround=false;rJumpCount=1
   }
-  // No selection yet
-  if(!ccBoard[r][c]||ccOwner(ccBoard[r][c])!==ccCurrent)return;
-  // Blind mode: clicking own unrevealed piece = flip + select + must move
-  if(ccBlind&&!ccRevealed[r][c]){
-    ccRevealed[r][c]=true;sndDraw();
-    const moves=ccLegalMoves(ccBoard,r,c);
-    if(moves.length){ccSelected=[r,c];ccValidMoves=moves;drawCc()}
-    else{ccEndTurnNoFlip()}
-    return;
+  rLastClick=now;
+  if(mx<riverW/3)rFacing=-1;
+  else if(mx>riverW*2/3)rFacing=1
+}
+
+function endRiverGame(){
+  gameOver=true;
+  const t=document.getElementById("go-title"),d=document.getElementById("go-detail");
+  t.textContent="\uD83D\uDEA2 \u6E38\u620F\u7ED3\u675F";
+  d.textContent="\u8DDD\u79BB: "+riverScore+" \u91D1\u5E01: "+riverCoins;
+  document.getElementById("game-over-overlay").classList.add("show");sndGameOver();celebrate()
+}
+
+function updateRiverUI(){
+  document.getElementById("score-a").textContent=riverScore;
+  document.getElementById("score-b").textContent=riverCoins;
+  document.getElementById("label-a").textContent="\u8DDD\u79BB\uFF1A";
+  document.getElementById("label-b").textContent="\u91D1\u5E01\uFF1A";
+  const l=document.getElementById("turn-label");
+  l.textContent="\u65E0\u5C3D\u7684\u6CB3\u6D41";l.className="turn-indicator turn-a"
+}
+
+document.addEventListener("keydown",e=>{
+  if(currentGame!=="river"||gameOver)return;
+  if(e.key===" "||e.key==="ArrowUp"){
+    e.preventDefault();
+    const now=Date.now();
+    if(now-rDblClickTime<300&&rOnGround){rVY=R_DBLJUMP;rOnGround=false;rJumpCount=2}
+    else if(rJumpCount<1){rVY=R_JUMP;rOnGround=false;rJumpCount=1}
+    rDblClickTime=now
   }
-  // Select revealed piece
-  ccSelected=[r,c];ccValidMoves=ccLegalMoves(ccBoard,r,c);drawCc();
-}
-function ccDoMove(fromR,fromC,toR,toC){
-  historyStack.push({b:ccBoard.map(row=>[...row]),c:ccCurrent,rev:ccRevealed?ccRevealed.map(row=>[...row]):null});
-  ccBoard[toR][toC]=ccBoard[fromR][fromC];ccBoard[fromR][fromC]=null;
-  if(ccRevealed)ccRevealed[toR][toC]=true;sndDraw();
-  const opp=ccCurrent==="R"?"B":"R";
-  if(!ccFindKing(ccBoard,opp)){scoreA=ccCurrent==="R"?1:0;scoreB=ccCurrent==="B"?1:0;updateCcUI();endCcGame(ccCurrent);return}
-  if(!ccHasLegalMoves(ccBoard,opp)){if(ccInCheck(ccBoard,opp)){scoreA=ccCurrent==="R"?1:0;scoreB=ccCurrent==="B"?1:0;updateCcUI();endCcGame(ccCurrent)}else{updateCcUI();endCcGame("draw")}return}
-  ccCurrent=opp;ccSelected=null;ccValidMoves=[];updateCcUI();drawCc();
-}
-function ccEndTurnNoFlip(){
-  const opp=ccCurrent==="R"?"B":"R";
-  if(!ccHasLegalMoves(ccBoard,opp)){if(ccInCheck(ccBoard,opp)){scoreA=ccCurrent==="R"?1:0;scoreB=ccCurrent==="B"?1:0;updateCcUI();endCcGame(ccCurrent)}else{updateCcUI();endCcGame("draw")}return}
-  ccCurrent=opp;ccSelected=null;ccValidMoves=[];updateCcUI();drawCc();
-}
-function drawCc(){ctx.clearRect(0,0,canvas.width,canvas.height);const cs=ccCellSize,pad=ccPad;ctx.fillStyle="#f5e6c8";ctx.fillRect(pad-cs*.4,pad-cs*.4,(CC_COLS-1)*cs+cs*.8,(CC_ROWS-1)*cs+cs*.8);ctx.strokeStyle="#4a3728";ctx.lineWidth=1;
-  for(let r=0;r<CC_ROWS;r++){ctx.beginPath();ctx.moveTo(ccX(0),ccY(r));ctx.lineTo(ccX(CC_COLS-1),ccY(r));ctx.stroke()}
-  for(let c=0;c<CC_COLS;c++){if(c===0||c===CC_COLS-1){ctx.beginPath();ctx.moveTo(ccX(c),ccY(0));ctx.lineTo(ccX(c),ccY(CC_ROWS-1));ctx.stroke()}else{ctx.beginPath();ctx.moveTo(ccX(c),ccY(0));ctx.lineTo(ccX(c),ccY(4));ctx.stroke();ctx.beginPath();ctx.moveTo(ccX(c),ccY(5));ctx.lineTo(ccX(c),ccY(CC_ROWS-1));ctx.stroke()}}
-  ctx.beginPath();ctx.moveTo(ccX(3),ccY(0));ctx.lineTo(ccX(5),ccY(2));ctx.stroke();ctx.beginPath();ctx.moveTo(ccX(5),ccY(0));ctx.lineTo(ccX(3),ccY(2));ctx.stroke();ctx.beginPath();ctx.moveTo(ccX(3),ccY(7));ctx.lineTo(ccX(5),ccY(9));ctx.stroke();ctx.beginPath();ctx.moveTo(ccX(5),ccY(7));ctx.lineTo(ccX(3),ccY(9));ctx.stroke();
-  ctx.fillStyle="#4a3728";ctx.font=Math.round(cs*.45)+"px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("楚 河",ccX(2),ccY(4.5));ctx.fillText("漢 界",ccX(6),ccY(4.5));
-  if(ccValidMoves.length){for(const[mr,mc]of ccValidMoves){ctx.fillStyle="rgba(99,102,241,0.25)";ctx.beginPath();ctx.arc(ccX(mc),ccY(mr),cs*.35,0,Math.PI*2);ctx.fill()}}
-  const hc=hoverCell;if(hc&&!gameOver&&ccBoard[hc.r][hc.c]&&ccOwner(ccBoard[hc.r][hc.c])===ccCurrent){ctx.fillStyle="rgba(255,255,255,0.15)";ctx.beginPath();ctx.arc(ccX(hc.c),ccY(hc.r),cs*.42,0,Math.PI*2);ctx.fill()}
-  if(ccSelected){ctx.strokeStyle="#facc15";ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(ccX(ccSelected[1]),ccY(ccSelected[0]),cs*.42,0,Math.PI*2);ctx.stroke()}
-  const radius=cs*.4;for(let r=0;r<CC_ROWS;r++)for(let c=0;c<CC_COLS;c++){const p=ccBoard[r][c];if(!p)continue;const cx=ccX(c),cy=ccY(r);const isRed=ccIsRed(p);const revealed=!ccBlind||ccRevealed[r][c];
-    ctx.beginPath();ctx.arc(cx,cy,radius,0,Math.PI*2);ctx.fillStyle="#f5e6c8";ctx.fill();ctx.strokeStyle=isRed?"#c0392b":"#1a1a1a";ctx.lineWidth=2;ctx.stroke();
-    ctx.beginPath();ctx.arc(cx,cy,radius*.82,0,Math.PI*2);ctx.strokeStyle=isRed?"#c0392b":"#1a1a1a";ctx.lineWidth=1;ctx.stroke();
-    ctx.fillStyle=isRed?"#c0392b":"#1a1a1a";ctx.font="bold "+Math.round(cs*.38)+"px serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(revealed?CC_NAMES[p]:"?",cx,cy)}}
-function hitTestCc(mx,my){const c=Math.round((mx-ccPad)/ccCellSize),r=Math.round((my-ccPad)/ccCellSize);if(r<0||r>=CC_ROWS||c<0||c>=CC_COLS)return null;if(Math.abs(mx-ccX(c))<ccCellSize*.48&&Math.abs(my-ccY(r))<ccCellSize*.48)return{r,c};return null}
-function endCcGame(winner){gameOver=true;ccGameOverFlag=true;const t=document.getElementById("go-title"),d=document.getElementById("go-detail");
-  if(winner==="R"){t.textContent="🎉 红方获胜！";d.textContent="将死黑方"}else if(winner==="B"){t.textContent="🎉 黑方获胜！";d.textContent="将死红方"}else{t.textContent="🤝 和棋！";d.textContent="双方无法将死"}
-  document.getElementById("game-over-overlay").classList.add("show");sndGameOver();celebrate()}
-function updateCcUI(){document.getElementById("score-a").textContent=scoreA;document.getElementById("score-b").textContent=scoreB;document.getElementById("label-a").textContent="红方：";document.getElementById("label-b").textContent="黑方：";const l=document.getElementById("turn-label");l.textContent=(ccCurrent==="R"?"红方":"黑方")+"走棋";l.className="turn-indicator "+(ccCurrent==="R"?"turn-a":"turn-b")}
+});
+
+
 /* =========================================================
    10) LIGHTS OUT (翻转灯)
    ========================================================= */
@@ -482,6 +678,15 @@ document.addEventListener("keydown",e=>{
   if(e.key==="q"||e.key==="Q")reactClick(0);
   if(e.key==="p"||e.key==="P")reactClick(1);
 });
+
+/* =========================================================
+   ENDLESS LAKE (iframe-based external game)
+   ========================================================= */
+function initEndlessLake(){
+  document.getElementById("c").style.display="none";
+  document.getElementById("game-iframe-wrap").style.display="block";
+  document.getElementById("game-iframe").src="endlesslake/index.html";
+}
 </script>
 </body>
 </html>
